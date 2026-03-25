@@ -60,8 +60,9 @@ volumes/
 *.temp
 .cache/
 
-# Pixi environments
+# Pixi (deprecated - migrated to uv)
 .pixi/
+pixi.lock
 
 # Jupyter Notebook checkpoints
 .ipynb_checkpoints/
@@ -108,3 +109,15 @@ docker-compose.includes.yml
 
 # Generated Traefik middleware configuration
 traefik/dynamic/middlewares.yml
+
+# Local MCP proxy services (user-specific, not part of gateway)
+mcp-synapse/
+mcp-axon/
+
+# pytest-benchmark storage
+.benchmarks/
+
+# Generated plans, reports, and superpowers docs
+docs/plans/
+docs/reports/
+docs/superpowers/
