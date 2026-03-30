@@ -15,9 +15,6 @@ x-mcp-healthcheck: &mcp-healthcheck
 
 include:
   - auth/docker-compose.yml
-  - servers/mcp-axon/docker-compose.yml
-  - servers/mcp-synapse/docker-compose.yml
-  - servers/mcp-unraid/docker-compose.yml
 
 networks:
   mcp-net:

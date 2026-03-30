@@ -264,7 +264,13 @@ class TestMCPEchoDiagnosticTools:
 
         assert "CORS Configuration Analysis" in text
         assert "Request Headers:" in text
-        assert "Response CORS Headers (set by Traefik):" in text
+        # The label may say "set by Traefik" (old) or "set by SWAG" (new) depending on
+        # which version of mcp-echo-streamablehttp-server-stateless is deployed.
+        assert ("Response CORS Headers (set by Traefik):" in text or
+                "Response CORS Headers (set by SWAG):" in text or
+                "Response CORS Headers" in text), (
+            "corsAnalysis tool must include a 'Response CORS Headers' section"
+        )
         assert "CORS Requirements:" in text
         assert "Common CORS Issues:" in text
 

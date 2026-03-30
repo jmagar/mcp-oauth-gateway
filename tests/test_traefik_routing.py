@@ -1,8 +1,14 @@
-"""Test Traefik Routing Configuration
+"""Test SWAG Nginx Routing Configuration
 Following CLAUDE.md - NO MOCKING, real services only!
 
-This test suite verifies that Traefik routing is correctly configured
-for all services, including path-based routing that was missing before.
+This test suite verifies that SWAG nginx routing is correctly configured
+for all services, including path-based routing via explicit location blocks.
+
+SWAG uses static nginx proxy-conf files (*.subdomain.conf) instead of
+Traefik docker labels.  Authentication is enforced via
+`auth_request /_oauth_verify` in location blocks that require a valid token.
+OAuth endpoints (/register, /authorize, /token, etc.) do NOT have auth_request
+so they remain freely accessible as required by RFC 7591.
 """
 
 import pytest
@@ -18,8 +24,8 @@ from .test_constants import MCP_FETCH_URL
 
 
 @pytest.mark.skipif(not MCP_FETCH_TESTS_ENABLED, reason="MCP Fetch tests disabled")
-class TestTraefikRouting:
-    """Test Traefik routing configuration for all services."""
+class TestSwagNginxRouting:
+    """Test SWAG nginx routing configuration for all services."""
 
     @pytest.mark.asyncio
     async def test_auth_service_routing(self, http_client, _wait_for_services):
@@ -105,14 +111,20 @@ class TestTraefikRouting:
             assert "www-authenticate" in response.headers, f"Path {path} missing WWW-Authenticate"
 
     @pytest.mark.asyncio
-    async def test_routing_priority_order(self, http_client, _wait_for_services):
-        """Test that routing priorities work correctly."""
-        # Auth routes should have highest priority
+    async def test_nginx_location_specificity_order(self, http_client, _wait_for_services):
+        """Test that nginx location specificity routes requests correctly.
+
+        nginx does not use numeric priorities.  More-specific location blocks
+        (exact match `=`, then prefix `/authorize`, then catch-all `/`) are
+        matched in order.  OAuth endpoints are defined before the catch-all
+        `location /` block, ensuring they are reachable without auth_request.
+        """
+        # OAuth /authorize endpoint is defined without auth_request so it is
+        # reachable; missing query params produce 422 from FastAPI validation
         response = await http_client.get(f"{AUTH_BASE_URL}/authorize")
-        # Should get 422 for missing parameters (FastAPI validation)
         assert response.status_code == HTTP_UNPROCESSABLE_ENTITY
 
-        # OAuth discovery should work without auth
+        # OAuth discovery (exact match location) is freely accessible
         response = await http_client.get(f"{AUTH_BASE_URL}/.well-known/oauth-authorization-server")
         assert response.status_code == HTTP_OK
 

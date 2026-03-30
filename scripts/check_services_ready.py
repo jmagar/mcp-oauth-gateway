@@ -110,7 +110,7 @@ def check_network_exists() -> bool:
 
 def check_volumes_exist() -> bool:
     """Check if required volumes exist."""
-    required_volumes = ["traefik-certificates", "redis-data", "coverage-data"]
+    required_volumes = ["swag-config", "redis-data", "coverage-data"]
     cmd = ["docker", "volume", "ls", "--format", "{{.Name}}"]
     code, stdout, stderr = run_command(cmd)
 
@@ -163,7 +163,7 @@ async def wait_for_services(max_wait: int = 60) -> bool:
     """Wait for all services to be healthy using Docker health checks."""
     print(f"\n{YELLOW}Waiting for Docker health checks (max {max_wait}s)...{RESET}")
 
-    services_to_check = ["traefik", "auth", "redis"]
+    services_to_check = ["swag", "auth", "redis"]
 
     # Add mcp-fetch if enabled
     if os.getenv("MCP_FETCH_ENABLED", "false").lower() == "true":
@@ -289,7 +289,7 @@ async def main():
     checks.append(("Volumes", check_volumes_exist()))
 
     # Build services if needed
-    base_services = ["traefik", "auth", "redis"]
+    base_services = ["swag", "auth", "redis"]
     if os.getenv("MCP_FETCH_ENABLED", "false").lower() == "true":
         base_services.append("mcp-fetch")
     if os.getenv("MCP_ECHO_STATEFUL_ENABLED", "false").lower() == "true":

@@ -400,7 +400,7 @@ async def _ensure_services_ready():
             check=True,
         )
         running_services = set(result.stdout.strip().split("\n"))
-        required_services = {"traefik", "auth", "redis"}
+        required_services = {"swag", "auth", "redis"}
 
         # Only require service-specific containers if their tests are enabled
         from .test_constants import MCP_ECHO_STATEFUL_TESTS_ENABLED

@@ -186,7 +186,7 @@ class TestMCPCORS:
                 "Health endpoint must require authentication per divine CLAUDE.md"
             )
 
-            # Note: ForwardAuth 401 responses bypass CORS middleware in Traefik
+            # Note: auth_request 401 responses from SWAG nginx bypass CORS headers
             # This is a known limitation - CORS headers are only added to successful responses
             # or when the request reaches the service
 

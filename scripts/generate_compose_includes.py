@@ -11,7 +11,7 @@ def main():
     """Generate docker-compose.includes.yml based on enabled services."""
     # Base includes that are always present
     includes = [
-        "traefik/docker-compose.yml",
+        "swag/docker-compose.yaml",
         "auth/docker-compose.yml",
     ]
 
@@ -64,7 +64,6 @@ def main():
         "include": includes,
         "networks": {"public": {"external": True}},
         "volumes": {
-            "traefik-certificates": {"external": True},
             "redis-data": {"external": True},
             "coverage-data": {"external": True},
             "auth-keys": {"external": True},

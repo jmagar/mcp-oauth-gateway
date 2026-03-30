@@ -65,7 +65,7 @@ class TestAuthCORS:
                         f"Missing Access-Control-Allow-Origin header for {endpoint}"
                     )
 
-                    # Traefik CORS middleware is configured to return "*" for all origins
+                    # SWAG nginx CORS configuration returns "*" for all origins
                     cors_origin = response.headers["access-control-allow-origin"]
                     assert cors_origin == "*", (
                         f"CORS origin mismatch for {endpoint}: expected '*' but got '{cors_origin}'"
@@ -82,7 +82,7 @@ class TestAuthCORS:
                     assert "access-control-allow-headers" in response.headers, (
                         f"Missing Access-Control-Allow-Headers header for {endpoint}"
                     )
-                    # Traefik CORS middleware is configured with accessControlAllowCredentials: false
+                    # SWAG nginx CORS configuration has credentials: false by default
                     # So we don't check for credentials header
 
     def test_auth_actual_request_cors_headers(self):
@@ -99,7 +99,7 @@ class TestAuthCORS:
             assert response.status_code == HTTP_OK, f"Metadata request failed: {response.status_code}"
 
             # Note: Auth service responses currently don't have CORS headers
-            # This is a known limitation - CORS should be handled by Traefik but isn't working properly
+            # This is a known limitation - CORS should be handled by SWAG nginx but isn't working properly
             # for the auth service yet
 
     def test_auth_health_endpoint_cors(self):

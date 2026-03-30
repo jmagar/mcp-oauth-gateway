@@ -66,7 +66,7 @@ class TestMCPEverythingIntegration:
             # Get base URL without /mcp for root test
             base_url = everything_base_url[:-4] if everything_base_url.endswith("/mcp") else everything_base_url
             response = await client.get(f"{base_url}/")
-            # The root requires auth through Traefik
+            # The root requires auth through SWAG nginx auth_request
             assert response.status_code == HTTP_UNAUTHORIZED
 
     @pytest.mark.integration

@@ -17,7 +17,7 @@ def get_container_status():
                 container = json.loads(line)
                 name = container.get("Names", "")
                 # Filter for our services
-                if any(svc in name for svc in ["traefik", "auth", "redis", "mcp-"]):
+                if any(svc in name for svc in ["swag", "auth", "redis", "mcp-"]):
                     containers.append(container)
 
         return containers

@@ -251,7 +251,7 @@ class TestSacredSealsCompliance:
             "./htmlcov/": "Coverage reports (git-ignored)!",
             "./auth/": "Auth service sanctuary!",
             "./mcp-fetch/": "MCP service sanctuary!",
-            "./traefik/": "Traefik configuration sanctuary!",
+            "./swag/": "SWAG reverse proxy configuration sanctuary!",
             "./coverage-spy/": "Sidecar coverage sanctuary!",
         }
 
@@ -280,7 +280,7 @@ class TestSacredSealsCompliance:
         service_compose_files = [
             "./auth/docker-compose.yml",
             "./mcp-fetch/docker-compose.yml",
-            "./traefik/docker-compose.yml",
+            "./swag/docker-compose.yaml",
         ]
 
         for compose_file in service_compose_files:
@@ -302,6 +302,45 @@ class TestSacredSealsCompliance:
                 continue  # These are installed packages, not our tests
             assert py_file.parent.name == "tests" or "tests" in str(py_file.parent), (
                 f"Test file {py_file} violates sacred structure - must be in ./tests/!"
+            )
+
+    @pytest.mark.asyncio
+    async def test_swag_routing_seal(self):
+        """Test SEAL OF SWAG ROUTING - nginx proxy-confs with auth_request enforcement."""
+        # swag/docker-compose.yaml must exist — the SWAG service definition
+        swag_compose = Path("./swag/docker-compose.yaml")
+        assert swag_compose.exists(), "swag/docker-compose.yaml missing! SWAG is the divine gateway guardian!"
+        assert swag_compose.is_file(), "swag/docker-compose.yaml must be a file!"
+
+        # swag/proxy-confs/ directory must exist — the nginx conf sanctuary
+        proxy_confs_dir = Path("./swag/proxy-confs")
+        assert proxy_confs_dir.exists(), "swag/proxy-confs/ missing! nginx proxy configurations required!"
+        assert proxy_confs_dir.is_dir(), "swag/proxy-confs/ must be a directory!"
+
+        # mcp-template.subdomain.conf must exist at the project root
+        template_conf = Path("./mcp-template.subdomain.conf")
+        assert template_conf.exists(), "mcp-template.subdomain.conf missing! Service template required!"
+        assert template_conf.is_file(), "mcp-template.subdomain.conf must be a file!"
+
+        # The template must use auth_request /_oauth_verify; for OAuth enforcement
+        template_content = template_conf.read_text()
+        assert "auth_request /_oauth_verify;" in template_content, (
+            "mcp-template.subdomain.conf must contain 'auth_request /_oauth_verify;' "
+            "to enforce OAuth token validation on MCP endpoints!"
+        )
+
+        # No traefik.http labels must exist in any compose files — migration complete
+        import glob
+
+        compose_files = glob.glob("./**/*.yml", recursive=True) + glob.glob("./**/*.yaml", recursive=True)
+        for compose_path in compose_files:
+            # Skip pixi/virtual env files
+            if ".pixi" in compose_path or ".git" in compose_path:
+                continue
+            content = Path(compose_path).read_text()
+            assert "traefik.http" not in content, (
+                f"{compose_path} still contains 'traefik.http' labels! "
+                "Migration to SWAG is complete — remove all Traefik labels!"
             )
 
     @pytest.mark.asyncio

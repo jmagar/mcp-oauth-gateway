@@ -207,7 +207,6 @@ network-create:
 
 # Create required volumes
 volumes-create:
-    docker volume create traefik-certificates || true
     docker volume create redis-data || true
     docker volume create coverage-data || true
     docker volume create auth-keys || true
@@ -217,7 +216,7 @@ volumes-create:
 generate-includes:
     pixi run python scripts/generate_compose_includes.py
 
-# Generate Traefik middlewares from template with environment variables
+# Generate SWAG middlewares from template with environment variables
 generate-middlewares:
     pixi run python scripts/generate_middlewares.py
 
@@ -669,7 +668,7 @@ check-ssl:
 
 	echo ""
 	echo "=== Certificates in ACME storage ==="
-	docker exec traefik cat /certificates/acme.json 2>/dev/null | jq -r '.letsencrypt.Certificates[].domain' || echo "No certificates found or Traefik not running"
+	docker exec swag cat /config/etc/letsencrypt/live/${BASE_DOMAIN}/cert.pem 2>/dev/null || echo "No certificates found or SWAG not running"
 
 # Generate MCP client token using mcp-streamablehttp-client
 mcp-client-token:

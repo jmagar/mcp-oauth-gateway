@@ -282,7 +282,7 @@ class TestMCPEchoClientCommands:
 
         # Should show some expected headers
         assert "authorization:" in output.lower() or "bearer" in output.lower()
-        # The printHeader tool returns specific headers (Traefik forwarded and auth headers)
+        # The printHeader tool returns specific headers (SWAG forwarded and auth headers)
         # It doesn't return all request headers like accept, content-type, etc.
         assert any(header in output.lower() for header in ["x-forwarded-", "x-real-ip", "authorization"])
 

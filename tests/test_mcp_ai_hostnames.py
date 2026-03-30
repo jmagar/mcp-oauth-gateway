@@ -270,4 +270,4 @@ class TestMCPAIHostnames:
             print(
                 "\n⚠️  No AI hostnames are accessible yet. This is expected if Let's Encrypt hasn't issued certificates.",
             )
-            print("   The hostnames are properly configured in Traefik and will work once certificates are issued.")
+            print("   The hostnames are properly configured in SWAG and will work once certificates are issued.")

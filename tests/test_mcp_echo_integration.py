@@ -349,7 +349,7 @@ class TestMCPEchoIntegration:
         data = self._parse_sse_response(response.text)
         headers_text = data["result"]["content"][0]["text"]
 
-        # Check for ForwardAuth headers that Traefik adds
+        # Check for auth_request headers that SWAG nginx adds
         # These might include X-User-Id, X-User-Name, etc.
         assert "authorization: Bearer" in headers_text
 

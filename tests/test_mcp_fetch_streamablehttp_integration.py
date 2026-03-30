@@ -75,8 +75,8 @@ async def test_fetch_native_requires_auth(mcp_fetchs_url, _wait_for_services):
 async def test_fetch_native_cors_preflight(mcp_fetchs_url, _wait_for_services):
     """Test CORS preflight handling."""
     # Skip this test as the MCP service doesn't handle OPTIONS directly
-    # CORS is handled by Traefik at the proxy level
-    pytest.skip("MCP services don't handle OPTIONS requests directly - CORS is handled by Traefik")
+    # CORS is handled by SWAG nginx at the proxy level
+    pytest.skip("MCP services don't handle OPTIONS requests directly - CORS is handled by SWAG nginx")
 
 
 @pytest.mark.integration
