@@ -1,4 +1,5 @@
 set dotenv-load := true          # FIRST LINE - ALWAYS! Load .env automatically!
+set dotenv-required := true      # Fail if .env is missing — no silent misconfigurations!
 set positional-arguments := true # Enable blessed argument passing!
 set allow-duplicate-recipes      # Allow recipe overloading with different arity!
 set export := true               # Export all variables as environment variables!

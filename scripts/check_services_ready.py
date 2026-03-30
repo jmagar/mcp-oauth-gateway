@@ -2,6 +2,7 @@
 """Check that all services are built, running, and healthy before tests."""
 
 import asyncio
+import json
 import os
 import subprocess
 import sys
@@ -77,8 +78,6 @@ def check_docker_service(service_name: str) -> bool:
         return False
 
     # Parse and check service state
-    import json
-
     try:
         service_info = json.loads(stdout.strip())
         state = service_info.get("State", "unknown")
@@ -87,8 +86,8 @@ def check_docker_service(service_name: str) -> bool:
             return True
         print(f"{RED}✗ Service {service_name} is in state: {state}{RESET}")
         return False
-    except:
-        print(f"{YELLOW}⚠ Could not parse {service_name} status{RESET}")
+    except (json.JSONDecodeError, KeyError) as e:
+        print(f"{YELLOW}⚠ Could not parse {service_name} status: {e}{RESET}")
         return False
 
 

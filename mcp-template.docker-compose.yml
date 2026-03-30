@@ -31,7 +31,7 @@ services:
       # NOTE: When using this template as part of the main docker-compose.yml,
       # add the following line to import common healthcheck settings:
       # <<: *mcp-healthcheck
-      test: ["CMD-SHELL", "curl -s -o /dev/null http://localhost:3000/ || exit 1"]
+      test: ["CMD", "sh", "-c", "curl -s -X POST http://localhost:3000/mcp -H 'Content-Type: application/json' -H 'Accept: application/json, text/event-stream' -d '{\"jsonrpc\":\"2.0\",\"method\":\"initialize\",\"params\":{\"protocolVersion\":\"YOUR_SERVICE_PROTOCOL_VERSION\",\"capabilities\":{},\"clientInfo\":{\"name\":\"healthcheck\",\"version\":\"1.0\"}},\"id\":1}' | grep -q '\"protocolVersion\"'"]
       interval: 30s
       timeout: 5s
       retries: 3

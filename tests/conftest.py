@@ -236,7 +236,7 @@ def pytest_configure(config):
         for m in missing:
             print(m, file=sys.stderr)
         print("=" * 60, file=sys.stderr)
-        sys.exit(1)  # Exit immediately with error code
+        pytest.exit("Critical environment variables missing", returncode=1)
 
     # Validate JWT_ALGORITHM is RS256
     jwt_algorithm = os.getenv("JWT_ALGORITHM")
@@ -247,7 +247,7 @@ def pytest_configure(config):
         )
         print("   Update .env file to set JWT_ALGORITHM=RS256", file=sys.stderr)
         print("=" * 60, file=sys.stderr)
-        sys.exit(1)  # Exit immediately with error code
+        pytest.exit("JWT_ALGORITHM must be RS256", returncode=1)
 
     # Validate JWT_PRIVATE_KEY_B64 is a valid base64-encoded RSA key
     jwt_private_key_b64 = os.getenv("JWT_PRIVATE_KEY_B64")
@@ -263,12 +263,12 @@ def pytest_configure(config):
                 )
                 print("   Run: just generate-rsa-keys", file=sys.stderr)
                 print("=" * 60, file=sys.stderr)
-                pytest.exit("Token validation failed", returncode=1)
+                pytest.exit("JWT_PRIVATE_KEY_B64 is not a valid PEM key", returncode=1)
         except Exception as e:
             print(f"❌ JWT_PRIVATE_KEY_B64 is not valid base64: {e}", file=sys.stderr)
             print("   Run: just generate-rsa-keys", file=sys.stderr)
             print("=" * 60, file=sys.stderr)
-            sys.exit(1)  # Exit immediately with error code
+            pytest.exit(f"JWT_PRIVATE_KEY_B64 is not valid base64: {e}", returncode=1)
 
     # Summary of validation status
     if token_valid:
@@ -769,7 +769,12 @@ def unique_client_name(unique_test_id):
     return f"TEST {unique_test_id}"
 
 
-# Global registry for tracking test client registrations
+# Global registry for tracking test client registrations.
+# NOTE: Under pytest-xdist, each worker process has its own copy of this list.
+# The session-level cleanup (cleanup_all_test_clients) will see an empty list
+# in the main process because workers never share this state. Per-fixture cleanup
+# via the registered_client fixture's teardown is the only reliable mechanism
+# under xdist. The session-level cleanup is kept for non-parallel runs.
 _TEST_CLIENT_REGISTRY = []
 
 

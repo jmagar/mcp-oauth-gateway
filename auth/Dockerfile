@@ -7,11 +7,10 @@ RUN pip install --no-cache-dir uv==0.5.29
 
 ENV PATH="/root/.local/bin:$PATH"
 
-# Copy dependency files first for layer caching
+# Copy pyproject.toml first for layer caching — deps only reinstall if this changes
 COPY mcp-oauth-dynamicclient/pyproject.toml /app/mcp-oauth-dynamicclient/pyproject.toml
-COPY mcp-oauth-dynamicclient/src /app/mcp-oauth-dynamicclient/src
 
-# Install dependencies with uv
+# Install dependencies with uv (cached unless pyproject.toml changes)
 RUN uv pip install --system \
     fastapi \
     "uvicorn[standard]" \
@@ -22,6 +21,9 @@ RUN uv pip install --system \
     PyJWT \
     cryptography \
     python-multipart
+
+# Copy source after installing deps — code changes don't invalidate the install cache
+COPY mcp-oauth-dynamicclient/src /app/mcp-oauth-dynamicclient/src
 
 # Create keys directory for RS256
 RUN mkdir -p /app/keys
