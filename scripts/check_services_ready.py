@@ -294,7 +294,8 @@ async def main():
     checks.append(("Volumes", check_volumes_exist()))
 
     # Build services if needed
-    base_services = ["swag", "auth", "redis"]
+    # Service names as defined in auth/docker-compose.yml and swag/docker-compose.yaml
+    base_services = ["swag", "mcp-oauth", "mcp-oauth-redis"]
     if os.getenv("MCP_FETCH_ENABLED", "false").lower() == "true":
         base_services.append("mcp-fetch")
     if os.getenv("MCP_ECHO_STATEFUL_ENABLED", "false").lower() == "true":

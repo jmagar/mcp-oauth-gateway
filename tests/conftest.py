@@ -403,43 +403,31 @@ async def _ensure_services_ready():
         # Service names as defined in auth/docker-compose.yml and swag/docker-compose.yaml
         required_services = {"swag", "mcp-oauth", "mcp-oauth-redis"}
 
-        # Only require service-specific containers if their tests are enabled
-        from .test_constants import MCP_ECHO_STATEFUL_TESTS_ENABLED
-        from .test_constants import MCP_ECHO_STATELESS_TESTS_ENABLED
-        from .test_constants import MCP_EVERYTHING_TESTS_ENABLED
-        from .test_constants import MCP_FETCH_TESTS_ENABLED
-        from .test_constants import MCP_FETCHS_TESTS_ENABLED
-        from .test_constants import MCP_FILESYSTEM_TESTS_ENABLED
-        from .test_constants import MCP_MEMORY_TESTS_ENABLED
-        from .test_constants import MCP_PLAYWRIGHT_TESTS_ENABLED
-        from .test_constants import MCP_SEQUENTIALTHINKING_TESTS_ENABLED
-        from .test_constants import MCP_TESTING_URL
-        from .test_constants import MCP_TIME_TESTS_ENABLED
-        from .test_constants import MCP_TMUX_TESTS_ENABLED
-
-        # Add service-specific requirements if enabled
-        if MCP_ECHO_STATEFUL_TESTS_ENABLED and not MCP_TESTING_URL:
-            required_services.add("mcp-echo-stateful")
-        if MCP_ECHO_STATELESS_TESTS_ENABLED and not MCP_TESTING_URL:
-            required_services.add("mcp-echo-stateless")
-        if MCP_FETCH_TESTS_ENABLED and not MCP_TESTING_URL:
-            required_services.add("mcp-fetch")
-        if MCP_FETCHS_TESTS_ENABLED and not MCP_TESTING_URL:
-            required_services.add("mcp-fetchs")
-        if MCP_EVERYTHING_TESTS_ENABLED and not MCP_TESTING_URL:
-            required_services.add("mcp-everything")
-        if MCP_FILESYSTEM_TESTS_ENABLED and not MCP_TESTING_URL:
-            required_services.add("mcp-filesystem")
-        if MCP_MEMORY_TESTS_ENABLED and not MCP_TESTING_URL:
-            required_services.add("mcp-memory")
-        if MCP_PLAYWRIGHT_TESTS_ENABLED and not MCP_TESTING_URL:
-            required_services.add("mcp-playwright")
-        if MCP_SEQUENTIALTHINKING_TESTS_ENABLED and not MCP_TESTING_URL:
-            required_services.add("mcp-sequentialthinking")
-        if MCP_TIME_TESTS_ENABLED and not MCP_TESTING_URL:
-            required_services.add("mcp-time")
-        if MCP_TMUX_TESTS_ENABLED and not MCP_TESTING_URL:
-            required_services.add("mcp-tmux")
+        # Add service-specific requirements when running locally (not against remote URL)
+        from . import test_constants as tc
+        if not tc.MCP_TESTING_URL:
+            if tc.MCP_ECHO_STATEFUL_TESTS_ENABLED:
+                required_services.add("mcp-echo-stateful")
+            if tc.MCP_ECHO_STATELESS_TESTS_ENABLED:
+                required_services.add("mcp-echo-stateless")
+            if tc.MCP_FETCH_TESTS_ENABLED:
+                required_services.add("mcp-fetch")
+            if tc.MCP_FETCHS_TESTS_ENABLED:
+                required_services.add("mcp-fetchs")
+            if tc.MCP_EVERYTHING_TESTS_ENABLED:
+                required_services.add("mcp-everything")
+            if tc.MCP_FILESYSTEM_TESTS_ENABLED:
+                required_services.add("mcp-filesystem")
+            if tc.MCP_MEMORY_TESTS_ENABLED:
+                required_services.add("mcp-memory")
+            if tc.MCP_PLAYWRIGHT_TESTS_ENABLED:
+                required_services.add("mcp-playwright")
+            if tc.MCP_SEQUENTIALTHINKING_TESTS_ENABLED:
+                required_services.add("mcp-sequentialthinking")
+            if tc.MCP_TIME_TESTS_ENABLED:
+                required_services.add("mcp-time")
+            if tc.MCP_TMUX_TESTS_ENABLED:
+                required_services.add("mcp-tmux")
 
         missing = required_services - running_services
         if missing:
