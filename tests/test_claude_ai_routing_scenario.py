@@ -110,8 +110,8 @@ class TestClaudeAIRoutingScenario:
             },
             {
                 "path": "/health",
-                "expected": 401,  # Health checks should use /mcp per divine CLAUDE.md
-                "description": "Health endpoint (requires auth like all non-OAuth paths)",
+                "expected": 200,  # /health is public (no auth_request) per nginx template
+                "description": "Health endpoint (public, no auth required)",
             },
             {
                 "path": "/nonexistent",

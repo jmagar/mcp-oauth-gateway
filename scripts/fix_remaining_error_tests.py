@@ -80,7 +80,7 @@ def main():
     target_files = [
         "test_claude_ai_routing_scenario.py",
         "test_coverage_gaps.py",
-        "test_traefik_routing.py",
+        "test_swag_nginx_routing.py",
         "test_coverage_improvements.py",
     ]
 

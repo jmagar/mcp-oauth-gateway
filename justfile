@@ -374,10 +374,6 @@ logs-clean days="0":
         echo "📭 No log files remaining"
     fi
 
-# Test logging configuration
-logs-test:
-    pixi run python scripts/test_logging_configuration.py
-
 # Force clean all logs without confirmation
 logs-clean-force:
     FORCE_CLEAN=1 just logs-clean
