@@ -15,6 +15,7 @@ x-mcp-healthcheck: &mcp-healthcheck
 
 include:
   - auth/docker-compose.yml
+  - swag/docker-compose.yaml
 
 networks:
   mcp-net:

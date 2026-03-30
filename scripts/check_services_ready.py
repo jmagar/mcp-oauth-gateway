@@ -101,16 +101,20 @@ def check_network_exists() -> bool:
         print(f"{RED}✗ Failed to list networks: {stderr}{RESET}")
         return False
 
-    if "public" in stdout:
-        print(f"{GREEN}✓ Network 'public' exists{RESET}")
+    # Accept either the legacy 'public' network or the current 'mcp-oauth'/'jakenet' networks
+    mcp_network = os.getenv("MCP_NETWORK", "mcp-oauth")
+    if mcp_network in stdout or "jakenet" in stdout or "public" in stdout:
+        print(f"{GREEN}✓ MCP network exists{RESET}")
         return True
-    print(f"{RED}✗ Network 'public' does not exist{RESET}")
+    print(f"{RED}✗ MCP network ('{mcp_network}' or 'jakenet') does not exist{RESET}")
     return False
 
 
 def check_volumes_exist() -> bool:
     """Check if required volumes exist."""
-    required_volumes = ["swag-config", "redis-data", "coverage-data"]
+    # mcp-oauth-redis-data is the volume declared in docker-compose.yml
+    # SWAG uses bind mounts (/config) so no named volume to check
+    required_volumes = ["mcp-oauth-redis-data"]
     cmd = ["docker", "volume", "ls", "--format", "{{.Name}}"]
     code, stdout, stderr = run_command(cmd)
 
@@ -163,7 +167,8 @@ async def wait_for_services(max_wait: int = 60) -> bool:
     """Wait for all services to be healthy using Docker health checks."""
     print(f"\n{YELLOW}Waiting for Docker health checks (max {max_wait}s)...{RESET}")
 
-    services_to_check = ["swag", "auth", "redis"]
+    # Service names as defined in auth/docker-compose.yml and swag/docker-compose.yaml
+    services_to_check = ["swag", "mcp-oauth", "mcp-oauth-redis"]
 
     # Add mcp-fetch if enabled
     if os.getenv("MCP_FETCH_ENABLED", "false").lower() == "true":

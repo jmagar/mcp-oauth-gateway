@@ -668,7 +668,7 @@ check-ssl:
 
 	echo ""
 	echo "=== Certificates in ACME storage ==="
-	docker exec swag cat /config/etc/letsencrypt/live/${BASE_DOMAIN}/cert.pem 2>/dev/null || echo "No certificates found or SWAG not running"
+	docker exec swag cat /config/etc/letsencrypt/live/${SWAG_URL:-$BASE_DOMAIN}/cert.pem 2>/dev/null || echo "No certificates found or SWAG not running"
 
 # Generate MCP client token using mcp-streamablehttp-client
 mcp-client-token:

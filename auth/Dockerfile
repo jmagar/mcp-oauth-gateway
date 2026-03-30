@@ -2,11 +2,8 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system dependencies and uv
-RUN apt-get update && apt-get install -y \
-    curl \
-    && rm -rf /var/lib/apt/lists/* \
-    && curl -LsSf https://astral.sh/uv/install.sh | sh
+# Install uv via pip for reproducible builds (pinned version, no curl | sh)
+RUN pip install --no-cache-dir uv==0.5.29
 
 ENV PATH="/root/.local/bin:$PATH"
 

@@ -394,13 +394,14 @@ async def _ensure_services_ready():
     try:
         # Check if services are running
         result = subprocess.run(
-            ["docker", "compose", "ps", "--services", "--filter", "status=running"],
+            ["docker", "compose", "-f", "docker-compose.includes.yml", "ps", "--services", "--filter", "status=running"],
             capture_output=True,
             text=True,
             check=True,
         )
         running_services = set(result.stdout.strip().split("\n"))
-        required_services = {"swag", "auth", "redis"}
+        # Service names as defined in auth/docker-compose.yml and swag/docker-compose.yaml
+        required_services = {"swag", "mcp-oauth", "mcp-oauth-redis"}
 
         # Only require service-specific containers if their tests are enabled
         from .test_constants import MCP_ECHO_STATEFUL_TESTS_ENABLED
