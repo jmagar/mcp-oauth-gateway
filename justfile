@@ -23,7 +23,7 @@ ensure-services-ready:
 
 # Universal test runner with flexible arguments (replaces test, test-all, test-file, test-verbose)
 test *args:
-    pixi run pytest {{args}}
+    uv run pytest {{args}}
     echo "\n🧹 Cleaning up test registrations..."
 
 # Alias for backwards compatibility
@@ -670,16 +670,16 @@ check-ssl:
 # Generate MCP client token using mcp-streamablehttp-client
 mcp-client-token:
     echo "🔐 Generating MCP client token using mcp-streamablehttp-client..."
-    pixi run install-mcp-client || true
-    export MCP_SERVER_URL="https://mcp-fetch.${BASE_DOMAIN}/mcp" && \
-    pixi run python -m mcp_streamablehttp_client.cli --token --server-url "$MCP_SERVER_URL"
+    uv pip install -e mcp-streamablehttp-client 2>/dev/null || true
+    export MCP_SERVER_URL="https://mcp-auth.${BASE_DOMAIN}" && \
+    uv run python -m mcp_streamablehttp_client.cli --token --server-url "$MCP_SERVER_URL"
 
 # Complete MCP client token flow with auth code
 mcp-client-token-complete auth_code:
     echo "🔐 Completing MCP client token flow with authorization code..."
-    export MCP_SERVER_URL="https://mcp-fetch.${BASE_DOMAIN}/mcp" && \
+    export MCP_SERVER_URL="https://mcp-auth.${BASE_DOMAIN}" && \
     export MCP_AUTH_CODE="{{ auth_code }}" && \
-    pixi run python scripts/complete_mcp_oauth.py
+    uv run python scripts/complete_mcp_oauth.py
 
 
 # OAuth Management Commands - Using flexible script runner

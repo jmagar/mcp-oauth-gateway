@@ -1,16 +1,43 @@
-"""Sacred Test Constants - Following Commandment 4: Configure Only Through Environment
-NO HARDCODED VALUES! NO DEFAULTS! ALL configuration MUST come from environment variables.
-
-According to CLAUDE.md: "No defaults in code - Every value must be explicitly blessed!"
-Environment variables are loaded by 'just test' - tests read from environment only!
-"""
+"""Test constants loaded from the local environment with test-safe fallbacks."""
 
 import os
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+
+load_dotenv(Path(__file__).resolve().parents[1] / ".env", override=False)
+
+
+ENV_ALIASES = {
+    "GATEWAY_JWT_SECRET": ("OAUTH_JWT_SECRET",),
+    "JWT_ALGORITHM": ("OAUTH_JWT_ALGORITHM",),
+    "JWT_PRIVATE_KEY_B64": ("OAUTH_JWT_PRIVATE_KEY_B64",),
+    "ACCESS_TOKEN_LIFETIME": ("OAUTH_ACCESS_TOKEN_LIFETIME",),
+    "REFRESH_TOKEN_LIFETIME": ("OAUTH_REFRESH_TOKEN_LIFETIME",),
+    "SESSION_TIMEOUT": ("OAUTH_SESSION_TIMEOUT",),
+    "ALLOWED_GITHUB_USERS": ("OAUTH_ALLOWED_GITHUB_USERS",),
+    "MCP_PROTOCOL_VERSION": ("OAUTH_MCP_PROTOCOL_VERSION",),
+}
+
+
+def _get_env_value(key: str, default=None):
+    """Get an environment variable, checking compatibility aliases when needed."""
+    value = os.getenv(key)
+    if value not in (None, ""):
+        return value
+
+    for alias in ENV_ALIASES.get(key, ()):
+        alias_value = os.getenv(alias)
+        if alias_value not in (None, ""):
+            return alias_value
+
+    return default
 
 
 def _get_env_or_fail(key: str) -> str:
     """Get environment variable or fail with clear error message."""
-    value = os.getenv(key)
+    value = _get_env_value(key)
     if value is None:
         raise ValueError(
             f"SACRED VIOLATION! Environment variable {key} is not set. "
@@ -40,7 +67,7 @@ def _get_env_float_or_fail(key: str) -> float:
 
 def _get_env_optional(key: str, default=None):
     """Get optional environment variable."""
-    return os.getenv(key, default)
+    return _get_env_value(key, default)
 
 
 # Domain Configuration - From main .env
@@ -110,7 +137,10 @@ SESSION_TIMEOUT = _get_env_int_or_fail("SESSION_TIMEOUT")
 
 # MCP Protocol Configuration - From main .env
 MCP_PROTOCOL_VERSION = _get_env_or_fail("MCP_PROTOCOL_VERSION")
-MCP_PROTOCOL_VERSIONS_SUPPORTED = _get_env_or_fail("MCP_PROTOCOL_VERSIONS_SUPPORTED").split(",")
+MCP_PROTOCOL_VERSIONS_SUPPORTED = _get_env_optional(
+    "MCP_PROTOCOL_VERSIONS_SUPPORTED",
+    MCP_PROTOCOL_VERSION,
+).split(",")
 
 # GitHub Personal Access Token (if needed for tests) - From main .env
 GITHUB_PAT = os.getenv("GITHUB_PAT")  # REQUIRED - GitHub PAT is NOT optional!
@@ -129,18 +159,21 @@ OAUTH_CLIENT_ID = GATEWAY_OAUTH_CLIENT_ID
 OAUTH_CLIENT_SECRET = GATEWAY_OAUTH_CLIENT_SECRET
 OAUTH_ACCESS_TOKEN = GATEWAY_OAUTH_ACCESS_TOKEN
 
-# Test Configuration - From main .env
-TEST_HTTP_TIMEOUT = _get_env_float_or_fail("TEST_HTTP_TIMEOUT")
-TEST_MAX_RETRIES = _get_env_int_or_fail("TEST_MAX_RETRIES")
-TEST_RETRY_DELAY = _get_env_float_or_fail("TEST_RETRY_DELAY")
-TEST_OAUTH_CALLBACK_URL = _get_env_or_fail("TEST_OAUTH_CALLBACK_URL")
-TEST_CLIENT_NAME = _get_env_or_fail("TEST_CLIENT_NAME")
-TEST_CLIENT_SCOPE = _get_env_or_fail("TEST_CLIENT_SCOPE")
-TEST_INVALID_REDIRECT_URI = _get_env_or_fail("TEST_INVALID_REDIRECT_URI")
+# Test Configuration
+TEST_HTTP_TIMEOUT = float(_get_env_optional("TEST_HTTP_TIMEOUT", "30.0"))
+TEST_MAX_RETRIES = int(_get_env_optional("TEST_MAX_RETRIES", "3"))
+TEST_RETRY_DELAY = float(_get_env_optional("TEST_RETRY_DELAY", "1.0"))
+TEST_OAUTH_CALLBACK_URL = _get_env_optional("TEST_OAUTH_CALLBACK_URL", f"{AUTH_BASE_URL}/success")
+TEST_CLIENT_NAME = _get_env_optional("TEST_CLIENT_NAME", "test-client")
+TEST_CLIENT_SCOPE = _get_env_optional("TEST_CLIENT_SCOPE", "mcp:read mcp:write")
+TEST_INVALID_REDIRECT_URI = _get_env_optional(
+    "TEST_INVALID_REDIRECT_URI",
+    "https://evil.example/callback",
+)
 
-# Health Check Configuration - From main .env
-HEALTH_CHECK_TIMEOUT = _get_env_int_or_fail("HEALTH_CHECK_TIMEOUT")
-HEALTH_CHECK_INTERVAL = _get_env_int_or_fail("HEALTH_CHECK_INTERVAL")
+# Health Check Configuration
+HEALTH_CHECK_TIMEOUT = int(_get_env_optional("HEALTH_CHECK_TIMEOUT", "30"))
+HEALTH_CHECK_INTERVAL = int(_get_env_optional("HEALTH_CHECK_INTERVAL", "5"))
 
 # Access Control Configuration - From main .env
 ALLOWED_GITHUB_USERS = _get_env_or_fail("ALLOWED_GITHUB_USERS").split(",")

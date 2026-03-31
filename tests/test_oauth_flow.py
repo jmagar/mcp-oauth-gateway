@@ -42,6 +42,8 @@ class TestOAuthFlow:
         assert "code" in metadata["response_types_supported"]
         assert "S256" in metadata["code_challenge_methods_supported"]
         assert "authorization_code" in metadata["grant_types_supported"]
+        assert "urn:ietf:params:oauth:grant-type:device_code" in metadata["grant_types_supported"]
+        assert metadata["device_authorization_endpoint"] == f"{AUTH_BASE_URL}/device/code"
 
     @pytest.mark.asyncio
     async def test_client_registration_rfc7591(self, http_client, _wait_for_services, unique_client_name):

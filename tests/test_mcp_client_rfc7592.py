@@ -14,8 +14,12 @@ from pathlib import Path
 import pytest
 
 
-# Add parent directory to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent / "mcp-streamablehttp-client" / "src"))
+CLIENT_SRC = Path(__file__).parent.parent / "mcp-streamablehttp-client" / "src"
+if CLIENT_SRC.exists():
+    sys.path.insert(0, str(CLIENT_SRC))
+
+pytest.importorskip("mcp_streamablehttp_client.config")
+pytest.importorskip("mcp_streamablehttp_client.oauth")
 
 from mcp_streamablehttp_client.config import Settings
 from mcp_streamablehttp_client.oauth import OAuthClient

@@ -4,3 +4,6 @@
 [submodule "mcp-streamablehttp-proxy"]
 	path = mcp-streamablehttp-proxy
 	url = git@github.com:atrawog/mcp-streamablehttp-proxy.git
+[submodule "mcp-streamablehttp-client"]
+	path = mcp-streamablehttp-client
+	url = git@github.com:atrawog/mcp-streamablehttp-client.git

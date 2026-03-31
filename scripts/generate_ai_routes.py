@@ -29,8 +29,23 @@ Environment variables:
 
 import argparse
 import os
+import re
 import sys
 from pathlib import Path
+
+_HOSTNAME_RE = re.compile(r"^[a-z0-9]([a-z0-9\-]{0,61}[a-z0-9])?$")
+
+
+def validate_hostname(name: str, var: str) -> str:
+    """Validate a hostname value from an environment variable.
+
+    Prevents nginx config injection via newline or special characters.
+    """
+    if not _HOSTNAME_RE.match(name):
+        raise ValueError(
+            f"Invalid hostname in {var}={name!r}. Must match [a-z0-9][a-z0-9-]*[a-z0-9]"
+        )
+    return name
 
 AI_MODELS = [
     "aria",
@@ -119,19 +134,8 @@ server {{
     add_header X-MCP-Version "2025-06-18" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
 
-    # OAuth 2.1 token verification via {auth_service_host}
-    location = /_oauth_verify {{
-        internal;
-        include /config/nginx/resolver.conf;
-        proxy_pass http://{auth_service_host}:8000/verify;
-        proxy_pass_request_body off;
-        proxy_set_header Content-Length "";
-        proxy_set_header X-Original-URI $request_uri;
-        proxy_set_header X-Original-Method $request_method;
-        proxy_set_header X-Forwarded-Host $host;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_set_header Authorization $http_authorization;
-    }}
+    # OAuth 2.1 token verification via mcp-oauth (shared snippet)
+    include /config/nginx/proxy-confs/_oauth_verify.conf;
 
     # ──────────────────────────────────────────────
     # MCP endpoint (authenticated via {auth_service_host})
@@ -143,9 +147,13 @@ server {{
         }}
 
         auth_request /_oauth_verify;
-        auth_request_set $auth_status $upstream_status;
+        auth_request_set $auth_status    $upstream_status;
+        auth_request_set $auth_user_id   $upstream_http_x_user_id;
+        auth_request_set $auth_user      $upstream_http_x_user_name;
+        auth_request_set $auth_token     $upstream_http_x_auth_token;
 
         include /config/nginx/resolver.conf;
+        proxy_buffering off;
         include /config/nginx/mcp.conf;
 
         proxy_max_temp_file_size 0;
@@ -155,6 +163,9 @@ server {{
         proxy_set_header MCP-Protocol-Version $http_mcp_protocol_version;
         proxy_set_header Mcp-Session-Id $http_mcp_session_id;
         proxy_set_header Accept $http_accept;
+        proxy_set_header X-User-Id    $auth_user_id;
+        proxy_set_header X-User-Name  $auth_user;
+        proxy_set_header X-Auth-Token $auth_token;
 
         proxy_connect_timeout 240s;
         proxy_send_timeout 86400s;
@@ -165,17 +176,12 @@ server {{
         add_header Expires "0" always;
 
         add_header Access-Control-Allow-Origin $http_origin always;
-        add_header Access-Control-Allow-Methods "GET, POST, OPTIONS" always;
+        add_header Access-Control-Allow-Methods "GET, POST, DELETE, OPTIONS" always;
         add_header Access-Control-Allow-Headers "Authorization, Content-Type, Accept, MCP-Protocol-Version, Mcp-Session-Id, Last-Event-ID" always;
         add_header Access-Control-Allow-Credentials "true" always;
         add_header Access-Control-Max-Age "3600" always;
 
         if ($request_method = 'OPTIONS') {{
-            add_header Access-Control-Allow-Origin $http_origin always;
-            add_header Access-Control-Allow-Methods "GET, POST, DELETE, OPTIONS" always;
-            add_header Access-Control-Allow-Headers "Authorization, Content-Type, Accept, MCP-Protocol-Version, Mcp-Session-Id, Last-Event-ID" always;
-            add_header Access-Control-Allow-Credentials "true" always;
-            add_header Access-Control-Max-Age "3600" always;
             add_header Content-Type "text/plain charset=UTF-8";
             add_header Content-Length 0;
             return 204;
@@ -196,6 +202,14 @@ server {{
     }}
 
     location = /.well-known/oauth-authorization-server {{
+        include /config/nginx/resolver.conf;
+        include /config/nginx/proxy.conf;
+        add_header Cache-Control "public, max-age=3600" always;
+        proxy_pass http://{auth_service_host}:8000;
+    }}
+
+    location = /.well-known/oauth-client-id-metadata {{
+        # Public endpoint — no auth_request (used by MCP clients to bootstrap OAuth 2025-11-25)
         include /config/nginx/resolver.conf;
         include /config/nginx/proxy.conf;
         add_header Cache-Control "public, max-age=3600" always;

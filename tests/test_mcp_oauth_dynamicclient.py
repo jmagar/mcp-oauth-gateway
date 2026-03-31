@@ -71,6 +71,8 @@ class TestMCPOAuthDynamicClientPackage:
         # Grant types
         assert "authorization_code" in metadata["grant_types_supported"]
         assert "refresh_token" in metadata["grant_types_supported"]
+        assert "urn:ietf:params:oauth:grant-type:device_code" in metadata["grant_types_supported"]
+        assert metadata["device_authorization_endpoint"] == f"{AUTH_BASE_URL}/device/code"
 
         print("✅ OAuth metadata endpoint working correctly")
 

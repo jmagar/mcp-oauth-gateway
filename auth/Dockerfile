@@ -2,6 +2,10 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y curl \
+    && rm -rf /var/lib/apt/lists/*
+
 # Install uv via pip for reproducible builds (pinned version, no curl | sh)
 RUN pip install --no-cache-dir uv==0.5.29
 
