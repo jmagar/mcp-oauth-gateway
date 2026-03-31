@@ -24,10 +24,14 @@ RUN uv pip install --system \
     pydantic-settings \
     PyJWT \
     cryptography \
-    python-multipart
+    python-multipart \
+    rich
 
 # Copy source after installing deps — code changes don't invalidate the install cache
 COPY mcp-oauth-dynamicclient/src /app/mcp-oauth-dynamicclient/src
+
+# Copy colored-logging entrypoint (overrides submodule's plain logging)
+COPY auth/entrypoint.py /app/entrypoint.py
 
 # Create keys directory for RS256
 RUN mkdir -p /app/keys
@@ -41,4 +45,4 @@ EXPOSE 8000
 
 ENV PYTHONPATH=/app/mcp-oauth-dynamicclient/src:/app:${PYTHONPATH}
 
-CMD ["python", "-m", "mcp_oauth_dynamicclient.cli", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["python", "/app/entrypoint.py", "--host", "0.0.0.0", "--port", "8000"]

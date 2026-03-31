@@ -14,6 +14,15 @@ import httpx
 import pytest
 import requests
 from dotenv import load_dotenv
+from rich.logging import RichHandler
+
+# Configure colored logging for tests
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(message)s",
+    handlers=[RichHandler(show_time=True, show_path=False, rich_tracebacks=True)],
+    force=True,
+)
 
 load_dotenv(Path(__file__).resolve().parents[1] / ".env", override=False)
 
