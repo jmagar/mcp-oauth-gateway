@@ -6,7 +6,10 @@ import importlib
 import sys
 from pathlib import Path
 
+import pytest
 import scripts.generate_compose_includes as compose_includes
+
+pytestmark = pytest.mark.local_only
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 ENV_EXAMPLE = REPO_ROOT / ".env.example"

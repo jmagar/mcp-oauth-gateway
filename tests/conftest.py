@@ -13,7 +13,6 @@ from pathlib import Path
 import httpx
 import pytest
 import requests
-from dotenv import load_dotenv
 from rich.logging import RichHandler
 
 # Configure colored logging for tests
@@ -24,35 +23,14 @@ logging.basicConfig(
     force=True,
 )
 
-load_dotenv(Path(__file__).resolve().parents[1] / ".env", override=False)
-
+# test_constants already calls load_dotenv — no need to repeat here
 from .test_constants import AUTH_BASE_URL
 from .test_constants import GATEWAY_OAUTH_ACCESS_TOKEN
 from .test_constants import MCP_FETCH_URL
 from .test_constants import TEST_CLIENT_SCOPE
 from .test_constants import TEST_HTTP_TIMEOUT
 from .test_constants import TEST_OAUTH_CALLBACK_URL
-
-
-ENV_ALIASES = {
-    "GATEWAY_JWT_SECRET": ("OAUTH_JWT_SECRET",),
-    "JWT_PRIVATE_KEY_B64": ("OAUTH_JWT_PRIVATE_KEY_B64",),
-    "JWT_ALGORITHM": ("OAUTH_JWT_ALGORITHM",),
-}
-
-
-def _get_env_with_aliases(key: str) -> str | None:
-    """Return an environment variable, checking compatibility aliases."""
-    value = os.getenv(key)
-    if value is not None:
-        return value
-
-    for alias in ENV_ALIASES.get(key, ()):
-        alias_value = os.getenv(alias)
-        if alias_value is not None:
-            return alias_value
-
-    return None
+from .test_constants import _get_env_value
 
 
 # MCP Client tokens for external client testing
@@ -64,11 +42,6 @@ MCP_CLIENT_SECRET = os.getenv("MCP_CLIENT_SECRET")
 
 # Global rate limiter to prevent overwhelming services
 _RATE_LIMITER = Semaphore(10)  # Max 10 concurrent requests across all tests
-LOCAL_ONLY_TEST_FILES = {
-    "test_docker_compose_validation.py",
-    "test_device_flow.py",
-    "test_review_regressions.py",
-}
 INTEGRATION_PREREQ_ERRORS: list[str] = []
 
 
@@ -148,6 +121,8 @@ def _detect_integration_prereq_errors() -> list[str]:
 
 def pytest_configure(config):
     """Detect integration prerequisites before test collection."""
+    config.addinivalue_line("markers", "local_only: test runs without live services")
+
     if hasattr(config, "workerinput"):
         return
 
@@ -170,7 +145,7 @@ def pytest_configure(config):
 
     missing = []
     for var, desc in critical_vars.items():
-        if not _get_env_with_aliases(var):
+        if not _get_env_value(var):
             missing.append(f"  - {var}: {desc}")
 
     if missing:
@@ -181,7 +156,7 @@ def pytest_configure(config):
         pytest.exit("Critical environment variables missing", returncode=1)
 
     # Validate JWT_ALGORITHM is RS256
-    jwt_algorithm = _get_env_with_aliases("JWT_ALGORITHM")
+    jwt_algorithm = _get_env_value("JWT_ALGORITHM")
     if jwt_algorithm != "RS256":
         print(
             f"❌ JWT_ALGORITHM must be RS256, but found: {jwt_algorithm}",
@@ -192,7 +167,7 @@ def pytest_configure(config):
         pytest.exit("JWT_ALGORITHM must be RS256", returncode=1)
 
     # Validate JWT_PRIVATE_KEY_B64 is a valid base64-encoded RSA key
-    jwt_private_key_b64 = _get_env_with_aliases("JWT_PRIVATE_KEY_B64")
+    jwt_private_key_b64 = _get_env_value("JWT_PRIVATE_KEY_B64")
     if jwt_private_key_b64:
         try:
             import base64
@@ -231,7 +206,7 @@ def pytest_collection_modifyitems(config, items):
     reason = "integration prerequisites unavailable: " + ", ".join(INTEGRATION_PREREQ_ERRORS)
     skip_marker = pytest.mark.skip(reason=reason)
     for item in items:
-        if Path(item.fspath).name in LOCAL_ONLY_TEST_FILES:
+        if item.get_closest_marker("local_only"):
             continue
         item.add_marker(skip_marker)
 
@@ -590,7 +565,7 @@ async def _refresh_and_validate_tokens(_ensure_services_ready):
 
     all_valid = True
     for key, desc in required_vars.items():
-        value = _get_env_with_aliases(key) if key in ENV_ALIASES else os.getenv(key)
+        value = _get_env_value(key)
         if not value or len(value) < 5:  # Basic check that it's not empty (using same logic as check_services_ready.py)
             print(f"❌ Missing or too short: {desc} ({key})")
             all_valid = False

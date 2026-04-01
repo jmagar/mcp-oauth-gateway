@@ -10,6 +10,9 @@ Following CLAUDE.md - Testing configuration correctness.
 import os
 import re
 
+import pytest
+
+pytestmark = pytest.mark.local_only
 
 REPO_ROOT = os.path.dirname(os.path.dirname(__file__))
 PROXY_CONFS_DIR = os.path.join(REPO_ROOT, "swag", "proxy-confs")
