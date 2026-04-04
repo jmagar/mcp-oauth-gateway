@@ -1,6 +1,6 @@
 [submodule "mcp-oauth-dynamicclient"]
 	path = mcp-oauth-dynamicclient
-	url = git@github.com:atrawog/mcp-oauth-dynamicclient.git
+	url = git@github.com:jmagar/mcp-oauth-dynamicclient.git
 [submodule "mcp-streamablehttp-proxy"]
 	path = mcp-streamablehttp-proxy
 	url = git@github.com:atrawog/mcp-streamablehttp-proxy.git
