@@ -149,36 +149,40 @@ just pypi-build [pkg]    # Build wheel for package (or all)
 just pypi-publish [pkg]  # Full build+test+upload to PyPI
 ```
 
-### System Architecture — Three Layers
+### System Architecture — Two Layers (Gateway Pattern)
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│      SWAG - Layer 1 (nginx Reverse Proxy)                   │
-│  • Routes OAuth paths → Auth Service via proxy-confs        │
-│  • Routes MCP paths → MCP Services (after auth check)       │
-│  • Enforces authentication via auth_request directive        │
-│  • Provides HTTPS with Let's Encrypt                         │
+│      TLS Terminator - Layer 1 (Any reverse proxy)           │
+│  • TLS termination + Let's Encrypt only                     │
+│  • Forwards all traffic to Gateway on port 8000             │
+│  • No auth logic — one location block per service           │
+│  • Works with SWAG, Caddy, nginx, Traefik                   │
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
-│  Auth Service - Layer 2 (OAuth Oracle)                      │
+│  Gateway - Layer 2 (Auth Service + API Gateway)             │
 │  • Handles all OAuth endpoints (/register, /token, etc.)    │
-│  • Validates tokens via /verify for auth_request            │
+│  • Validates tokens inline (no auth_request subrequest)     │
+│  • Routes requests by Host header → Tailscale backend       │
+│  • Injects X-User-Id, X-User-Name headers after auth        │
+│  • Streams MCP responses (SSE, long-lived connections)      │
 │  • Integrates with GitHub OAuth for user auth               │
-│  • Uses mcp-oauth-dynamicclient for RFC compliance          │
-│  • Knows nothing about MCP protocols                        │
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
 │  MCP Services - Layer 3 (Protocol Servants)                 │
+│  • Accessible via Tailscale (MCP_*_BACKEND env vars)        │
 │  • Run mcp-streamablehttp-proxy wrapping official servers   │
-│  • Bridge stdio MCP servers to HTTP /mcp endpoints          │
 │  • Receive pre-authenticated requests only                  │
 │  • Know nothing of OAuth                                    │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 **Critical rule**: Each layer knows only its concern. Never mix them.
+
+**Routing**: Gateway uses the `Host` header to resolve which backend to proxy to.
+Each service needs `MCP_*_ENABLED=true`, `MCP_*_URLS=https://...`, `MCP_*_BACKEND=http://<tailscale-ip>:3000`.
 
 ### MCP Service Implementation Patterns
 
@@ -192,7 +196,7 @@ FastAPI + Uvicorn with direct StreamableHTTP protocol support. No stdio bridge.
 
 Services: **mcp-fetchs**, **mcp-echo-stateful**, **mcp-echo-stateless**, **mcp-axon**, **mcp-synapse**, **mcp-unraid**
 
-Both patterns expose `/mcp` endpoint, use Bearer token auth via SWAG, and require health checks.
+Both patterns expose `/mcp` endpoint, use Bearer token auth via the Gateway, and require health checks.
 
 ### Dual Authentication Realms
 
@@ -260,7 +264,7 @@ CLIENT_LIFETIME=7776000  # 90 days; 0 = never expires
 - `GET /jwks` — RS256 public keys
 - `POST /revoke` — RFC 7009 token revocation
 - `POST /introspect` — RFC 7662 token introspection
-- `GET/POST /verify` — SWAG auth_request validation
+- `GET/POST /verify` — Token validation (deprecated: legacy nginx auth_request endpoint, kept for backward compatibility)
 
 **Error handling:**
 - Authorization endpoint: no redirect on invalid `client_id` (show error page)
@@ -300,66 +304,37 @@ Metadata document format:
 6. Auth code → JWT exchange at `/token`
 7. StreamableHTTP requests with `Authorization: Bearer <jwt>` + `Mcp-Session-Id`
 
-### SWAG nginx Routing
+### TLS Terminator Routing (proxy-agnostic)
 
-**Critical**: OAuth routes must NOT have `auth_request` — this causes auth loops.
+Every MCP service subdomain uses the same ~10-line config — just TLS passthrough to the gateway.
+Auth, routing, CORS, origin validation, and streaming are all handled by the gateway itself.
 
 ```nginx
-# auth.subdomain.conf — OAuth service (NO auth_request here!)
+# mcp-fetch.subdomain.conf — identical for every service, just change DOMAIN
 server {
     listen 443 ssl;
-    server_name auth.*;
+    listen [::]:443 ssl;
 
-    location ~* ^/(register|authorize|token|callback|\.well-known)(/|$) {
-        proxy_pass http://auth:8000;
+    server_name fetch.yourdomain.com;
+
+    include /config/nginx/ssl.conf;
+    client_max_body_size 0;
+
+    location / {
+        proxy_pass http://mcp-oauth:8000;  # gateway host:port
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
-    }
-
-    location /verify {
-        proxy_pass http://auth:8000/verify;
-        proxy_pass_request_body off;
-        proxy_set_header Content-Length "";
-        proxy_set_header X-Original-URI $request_uri;
-    }
-}
-
-# mcp-fetch.subdomain.conf — MCP service (auth_request enforced)
-server {
-    listen 443 ssl;
-    server_name mcp-fetch.*;
-
-    auth_request /auth-verify;
-    auth_request_set $auth_user_id $upstream_http_x_user_id;
-    auth_request_set $auth_user_name $upstream_http_x_user_name;
-    auth_request_set $auth_token $upstream_http_x_auth_token;
-
-    location = /auth-verify {
-        internal;
-        proxy_pass http://auth:8000/verify;
-        proxy_pass_request_body off;
-        proxy_set_header Content-Length "";
-        proxy_set_header X-Original-URI $request_uri;
-        proxy_set_header Authorization $http_authorization;
-    }
-
-    location /mcp {
-        proxy_pass http://mcp-fetch:3000/mcp;
-        proxy_set_header X-User-Id $auth_user_id;
-        proxy_set_header X-User-Name $auth_user_name;
+        proxy_http_version 1.1;
+        proxy_set_header Connection '';
         proxy_buffering off;
-        proxy_read_timeout 3600s;
-    }
-
-    error_page 401 = @error401;
-    location @error401 {
-        add_header WWW-Authenticate 'Bearer realm="MCP Gateway"' always;
-        return 401;
+        proxy_read_timeout 86400s;
     }
 }
 ```
+
+See `mcp-template.subdomain.conf` for the full template.
 
 ### Redis Key Patterns
 
