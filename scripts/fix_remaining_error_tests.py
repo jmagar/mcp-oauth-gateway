@@ -29,10 +29,13 @@ def fix_mixed_patterns(content: str) -> str:
                     # This line accesses error["error"] directly, should be error["detail"]["error"]
                     lines[j] = lines[j].replace('error["error"]', 'error["detail"]["error"]')
                 elif (
-                    'error["error_description"]' in lines[j] and 'error["detail"]["error_description"]' not in lines[j]
+                    'error["error_description"]' in lines[j]
+                    and 'error["detail"]["error_description"]' not in lines[j]
                 ):
                     # This line accesses error["error_description"] directly
-                    lines[j] = lines[j].replace('error["error_description"]', 'error["detail"]["error_description"]')
+                    lines[j] = lines[j].replace(
+                        'error["error_description"]', 'error["detail"]["error_description"]'
+                    )
                 j += 1
 
         fixed_lines.append(lines[i])

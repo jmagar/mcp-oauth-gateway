@@ -66,7 +66,7 @@ def test_test_constants_accept_oauth_prefixed_env(monkeypatch) -> None:
         "TEST_HTTP_TIMEOUT": "30.0",
         "TEST_MAX_RETRIES": "3",
         "TEST_RETRY_DELAY": "1.0",
-        "TEST_OAUTH_CALLBACK_URL": "https://auth.example.com/success",
+        "TEST_OAUTH_CALLBACK_URL": "https://mcp-auth.example.com/success",
         "TEST_CLIENT_NAME": "test-client",
         "TEST_CLIENT_SCOPE": "mcp:read mcp:write",
         "TEST_INVALID_REDIRECT_URI": "https://evil.example/callback",
@@ -144,8 +144,9 @@ def test_test_constants_fill_non_secret_defaults(monkeypatch) -> None:
     ]:
         monkeypatch.setenv(key, "")
 
+    monkeypatch.setenv("MCP_PROTOCOL_VERSIONS_SUPPORTED", "")
+
     optional_keys = [
-        "MCP_PROTOCOL_VERSIONS_SUPPORTED",
         "TEST_HTTP_TIMEOUT",
         "TEST_MAX_RETRIES",
         "TEST_RETRY_DELAY",
@@ -168,7 +169,7 @@ def test_test_constants_fill_non_secret_defaults(monkeypatch) -> None:
         assert constants.TEST_HTTP_TIMEOUT == 30.0
         assert constants.TEST_MAX_RETRIES == 3
         assert constants.TEST_RETRY_DELAY == 1.0
-        assert constants.TEST_OAUTH_CALLBACK_URL == "https://auth.example.com/success"
+        assert constants.TEST_OAUTH_CALLBACK_URL == "https://mcp-auth.example.com/success"
         assert constants.TEST_CLIENT_NAME == "test-client"
         assert constants.TEST_CLIENT_SCOPE == "mcp:read mcp:write"
         assert constants.TEST_INVALID_REDIRECT_URI == "https://evil.example/callback"

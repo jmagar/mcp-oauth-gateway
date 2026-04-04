@@ -9,7 +9,9 @@ def get_container_status():
     """Get status of all containers."""
     try:
         # Get all running containers
-        result = subprocess.run(["docker", "ps", "--format", "json"], capture_output=True, text=True, check=True)
+        result = subprocess.run(
+            ["docker", "ps", "--format", "json"], capture_output=True, text=True, check=True
+        )
 
         containers = []
         for line in result.stdout.strip().split("\n"):

@@ -19,7 +19,9 @@ dependencies = [
     "aiofiles>=24.0.0",
     "click>=8.0.0",
     "rich>=13.0.0",
+    "tabulate>=0.9.0",
     "mcp>=1.0.0",
+    "mcp-streamablehttp-client",
     "python-dotenv>=1.0.0",
 ]
 
@@ -43,6 +45,7 @@ dev-dependencies = [
 ]
 
 [tool.uv.sources]
+mcp-streamablehttp-client = { path = "mcp-streamablehttp-client", editable = true }
 mcp-oauth-dynamicclient = { path = "mcp-oauth-dynamicclient", editable = true }
 
 # ========================================
@@ -50,7 +53,7 @@ mcp-oauth-dynamicclient = { path = "mcp-oauth-dynamicclient", editable = true }
 # ========================================
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
-testpaths = ["tests"]
+testpaths = ["tests", "@oauth-helpers/tests"]
 cache_dir = ".cache/pytest"
 python_files = ["test_*.py"]
 python_classes = ["Test*"]

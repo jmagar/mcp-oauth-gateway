@@ -67,7 +67,7 @@ This service channels the power of the **mcp-oauth-dynamicclient** package:
 ```dockerfile
 FROM python:3.11-slim  # The blessed Python vessel!
 
-# Install pixi - The holy package manager!
+# Install uv - The holy package manager!
 # Copy requirements and sacred source!
 # Run with uvicorn - The divine ASGI server!
 

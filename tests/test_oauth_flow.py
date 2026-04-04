@@ -6,6 +6,8 @@ import base64
 import hashlib
 import json
 import os
+
+from scripts.env_compat import get_env_value
 import secrets
 
 import pytest
@@ -46,10 +48,14 @@ class TestOAuthFlow:
         assert metadata["device_authorization_endpoint"] == f"{AUTH_BASE_URL}/device/code"
 
     @pytest.mark.asyncio
-    async def test_client_registration_rfc7591(self, http_client, _wait_for_services, unique_client_name):
+    async def test_client_registration_rfc7591(
+        self, http_client, _wait_for_services, unique_client_name
+    ):
         """Test dynamic client registration per RFC 7591."""
         # MUST have OAuth access token - test FAILS if not available
-        assert GATEWAY_OAUTH_ACCESS_TOKEN, "GATEWAY_OAUTH_ACCESS_TOKEN not available - run: just generate-github-token"
+        assert GATEWAY_OAUTH_ACCESS_TOKEN, (
+            "GATEWAY_OAUTH_ACCESS_TOKEN not available - run: just generate-github-token"
+        )
 
         # Track created clients for cleanup
         created_clients = []
@@ -78,7 +84,7 @@ class TestOAuthFlow:
             assert "client_id" in client
             assert "client_secret" in client
             # Check client_secret_expires_at matches CLIENT_LIFETIME from .env
-            client_lifetime = int(os.environ.get("CLIENT_LIFETIME", "7776000"))
+            client_lifetime = int(get_env_value("CLIENT_LIFETIME", "7776000"))
             if client_lifetime == 0:
                 assert client["client_secret_expires_at"] == 0  # Never expires
             else:
@@ -168,9 +174,13 @@ class TestOAuthFlow:
     async def test_pkce_flow(self, http_client, registered_client):
         """Test PKCE (RFC 7636) with S256 challenge method."""
         # Generate PKCE challenge
-        code_verifier = base64.urlsafe_b64encode(secrets.token_bytes(32)).decode("utf-8").rstrip("=")
+        code_verifier = (
+            base64.urlsafe_b64encode(secrets.token_bytes(32)).decode("utf-8").rstrip("=")
+        )
         code_challenge = (
-            base64.urlsafe_b64encode(hashlib.sha256(code_verifier.encode()).digest()).decode("utf-8").rstrip("=")
+            base64.urlsafe_b64encode(hashlib.sha256(code_verifier.encode()).digest())
+            .decode("utf-8")
+            .rstrip("=")
         )
 
         # Start authorization flow with PKCE
@@ -275,7 +285,9 @@ class TestOAuthFlow:
         assert response.headers.get("WWW-Authenticate") == "Bearer"
 
         # Test with invalid token
-        response = await http_client.get(f"{AUTH_BASE_URL}/verify", headers={"Authorization": "Bearer invalid_token"})
+        response = await http_client.get(
+            f"{AUTH_BASE_URL}/verify", headers={"Authorization": "Bearer invalid_token"}
+        )
 
         assert response.status_code == HTTP_UNAUTHORIZED
         error = response.json()

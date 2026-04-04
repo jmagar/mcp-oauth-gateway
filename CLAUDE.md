@@ -15,7 +15,7 @@ Always apply five whys before fixing:
 ### 2. The Tool Trinity
 **All commands flow through these three tools. No exceptions.**
 - `just` — task runner (all commands)
-- `pixi` — Python package manager
+- `uv` — Python package manager
 - `docker compose` — service orchestration
 
 ```bash
@@ -51,7 +51,8 @@ project/
 ├── logs/                 # Centralized logs
 ├── docker-compose.yml    # Master orchestration
 ├── justfile
-├── pixi.toml
+├── pyproject.toml
+├── uv.lock
 ├── .env                  # Secrets (gitignored)
 └── .env.example          # Template (tracked)
 ```

@@ -35,7 +35,7 @@ class TestSwagNginxRouting:
         assert response.status_code == HTTP_OK
         metadata = response.json()
         assert "issuer" in metadata
-        assert metadata["issuer"] == f"https://auth.{BASE_DOMAIN}"
+        assert metadata["issuer"] == f"https://mcp-auth.{BASE_DOMAIN}"
 
         # OAuth discovery endpoint serves as health check
         # Already tested above
@@ -132,7 +132,9 @@ class TestSwagNginxRouting:
     async def test_cross_domain_routing(self, http_client, _wait_for_services):
         """Test that each subdomain routes to correct service."""
         # Auth subdomain
-        response = await http_client.get(f"https://auth.{BASE_DOMAIN}/.well-known/oauth-authorization-server")
+        response = await http_client.get(
+            f"https://mcp-auth.{BASE_DOMAIN}/.well-known/oauth-authorization-server"
+        )
         assert response.status_code == HTTP_OK
         assert "authorization_endpoint" in response.json()
 
@@ -163,7 +165,7 @@ class TestSwagNginxRouting:
     async def test_http_to_https_redirect(self, http_client):
         """Test that HTTP requests are redirected to HTTPS."""
         # Test HTTP to HTTPS redirect for auth service
-        http_auth_url = f"http://auth.{BASE_DOMAIN}/.well-known/oauth-authorization-server"
+        http_auth_url = f"http://mcp-auth.{BASE_DOMAIN}/.well-known/oauth-authorization-server"
 
         response = await http_client.get(
             http_auth_url,
@@ -176,13 +178,17 @@ class TestSwagNginxRouting:
             302,
             307,
             308,
-        ], f"Expected redirect status code, got {response.status_code}. Response: {response.text[:200]}"
+        ], (
+            f"Expected redirect status code, got {response.status_code}. Response: {response.text[:200]}"
+        )
 
         # Check that Location header points to HTTPS
         assert "Location" in response.headers, "Missing Location header in redirect response"
         location = response.headers["Location"]
         assert location.startswith("https://"), f"Redirect should point to HTTPS, got: {location}"
-        assert f"auth.{BASE_DOMAIN}" in location, f"Redirect should preserve hostname, got: {location}"
+        assert f"mcp-auth.{BASE_DOMAIN}" in location, (
+            f"Redirect should preserve hostname, got: {location}"
+        )
 
         # Test HTTP to HTTPS redirect for MCP service
         http_mcp_url = f"http://fetch.{BASE_DOMAIN}/.well-known/oauth-authorization-server"
@@ -198,8 +204,12 @@ class TestSwagNginxRouting:
         # Check that Location header points to HTTPS
         assert "Location" in response.headers, "Missing Location header in MCP redirect response"
         location = response.headers["Location"]
-        assert location.startswith("https://"), f"MCP redirect should point to HTTPS, got: {location}"
-        assert f"fetch.{BASE_DOMAIN}" in location, f"MCP redirect should preserve hostname, got: {location}"
+        assert location.startswith("https://"), (
+            f"MCP redirect should point to HTTPS, got: {location}"
+        )
+        assert f"fetch.{BASE_DOMAIN}" in location, (
+            f"MCP redirect should preserve hostname, got: {location}"
+        )
 
         # Test that following the redirect works
         https_response = await http_client.get(
@@ -215,4 +225,4 @@ class TestSwagNginxRouting:
         # Verify we actually got the OAuth metadata response
         metadata = https_response.json()
         assert "issuer" in metadata, f"Invalid OAuth metadata response: {metadata}"
-        assert metadata["issuer"] == f"https://auth.{BASE_DOMAIN}", f"Incorrect issuer: {metadata}"
+        assert metadata["issuer"] == f"https://mcp-auth.{BASE_DOMAIN}", f"Incorrect issuer: {metadata}"

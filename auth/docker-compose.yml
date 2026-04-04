@@ -26,6 +26,30 @@ services:
       test: ["CMD", "curl", "-f", "-s", "http://localhost:8000/.well-known/oauth-authorization-server"]
       start_period: 30s
 
+  callback-relay:
+    <<: *mcp-common
+    build:
+      context: ..
+      dockerfile: auth/Dockerfile
+    container_name: callback-relay
+    command: ["python", "/app/scripts/callback_relay_server.py"]
+    environment:
+      CALLBACK_RELAY_HOST: ${CALLBACK_RELAY_HOST:-0.0.0.0}
+      CALLBACK_RELAY_PORT: ${CALLBACK_RELAY_PORT:-39001}
+      CALLBACK_RELAY_ADMIN_TOKEN: ${CALLBACK_RELAY_ADMIN_TOKEN}
+      CALLBACK_RELAY_REGISTRY: ${CALLBACK_RELAY_REGISTRY:-/app/.cache/callback-relay/registry.json}
+      LOG_LEVEL: ${CALLBACK_RELAY_LOG_LEVEL:-info}
+    volumes:
+      - ../.cache/callback-relay:/app/.cache/callback-relay
+    healthcheck:
+      <<: *mcp-healthcheck
+      test:
+        [
+          "CMD-SHELL",
+          "curl -f -s http://localhost:${CALLBACK_RELAY_PORT:-39001}/healthz",
+        ]
+      start_period: 10s
+
   mcp-oauth-redis:
     <<: *mcp-common
     image: redis:7-alpine

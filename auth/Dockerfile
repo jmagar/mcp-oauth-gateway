@@ -30,6 +30,10 @@ RUN uv pip install --system \
 # Copy source after installing deps — code changes don't invalidate the install cache
 COPY mcp-oauth-dynamicclient/src /app/mcp-oauth-dynamicclient/src
 
+# Copy callback relay runtime
+COPY @oauth-helpers/scripts/callback_relay.py /app/scripts/callback_relay.py
+COPY @oauth-helpers/scripts/callback_relay_server.py /app/scripts/callback_relay_server.py
+
 # Copy colored-logging entrypoint (overrides submodule's plain logging)
 COPY auth/entrypoint.py /app/entrypoint.py
 

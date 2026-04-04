@@ -19,7 +19,9 @@ class TestRoutingBugRegression:
     """Regression test for the routing configuration bug."""
 
     @pytest.mark.asyncio
-    async def test_mcp_path_without_host_only_routing_returns_401_not_404(self, http_client, _wait_for_services):
+    async def test_mcp_path_without_host_only_routing_returns_401_not_404(
+        self, http_client, _wait_for_services
+    ):
         """REGRESSION TEST: Ensure /mcp path returns 401 (auth required), not 404.
 
         Bug: When the SWAG nginx conf only matched the root location without a

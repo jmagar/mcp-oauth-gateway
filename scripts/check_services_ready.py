@@ -7,6 +7,7 @@ import os
 import subprocess
 import sys
 import time
+from argparse import ArgumentParser
 
 
 # Color codes for output
@@ -23,6 +24,17 @@ def run_command(cmd: list[str]) -> tuple[int, str, str]:
         return result.returncode, result.stdout, result.stderr
     except Exception as e:
         return 1, "", str(e)
+
+
+def parse_args():
+    """Parse CLI arguments."""
+    parser = ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--check-only",
+        action="store_true",
+        help="Inspect current service state without building or starting services.",
+    )
+    return parser.parse_args()
 
 
 def is_service_disabled(service_name: str) -> tuple[bool, str]:
@@ -74,6 +86,18 @@ def check_docker_service(service_name: str) -> bool:
         return False
 
     if not stdout.strip():
+        container_cmd = [
+            "docker",
+            "ps",
+            "--filter",
+            f"name=^{service_name}$",
+            "--format",
+            "{{.Names}}",
+        ]
+        code, stdout, stderr = run_command(container_cmd)
+        if code == 0 and stdout.strip() == service_name:
+            print(f"{GREEN}✓ Service {service_name} is running{RESET}")
+            return True
         print(f"{RED}✗ Service {service_name} is not running{RESET}")
         return False
 
@@ -125,7 +149,9 @@ def check_volumes_exist() -> bool:
     all_exist = True
 
     for volume in required_volumes:
-        if volume in existing_volumes:
+        if volume in existing_volumes or any(
+            existing.endswith(f"_{volume}") for existing in existing_volumes
+        ):
             print(f"{GREEN}✓ Volume '{volume}' exists{RESET}")
         else:
             print(f"{RED}✗ Volume '{volume}' does not exist{RESET}")
@@ -211,6 +237,14 @@ async def wait_for_services(max_wait: int = 60) -> bool:
             code, stdout, stderr = run_command(cmd)
 
             if code != 0:
+                if 'map has no entry for key "Health"' in stderr:
+                    cmd = ["docker", "inspect", service, "--format", "{{.State.Status}}"]
+                    code, stdout, stderr = run_command(cmd)
+                    if code != 0 or stdout.strip() != "running":
+                        print(f"{RED}✗ Failed to inspect {service}: {stderr}{RESET}")
+                        all_healthy = False
+                        unhealthy_services.append(f"{service} (not running)")
+                    continue
                 print(f"{RED}✗ Failed to inspect {service}: {stderr}{RESET}")
                 all_healthy = False
                 unhealthy_services.append(service)
@@ -267,19 +301,23 @@ def check_basic_config() -> bool:
             print(f"{RED}✗ {var_name} is missing or too short ({description}){RESET}")
             all_present = False
 
-    print(f"{YELLOW}Note: Full token validation happens during test setup via refresh_and_validate_tokens(){RESET}")
+    print(
+        f"{YELLOW}Note: Full token validation happens during test setup via refresh_and_validate_tokens(){RESET}"
+    )
     return all_present
 
 
 async def main():
     """Main check function."""
+    args = parse_args()
+
     print(f"{YELLOW}{'=' * 60}{RESET}")
     print(f"{YELLOW}Pre-test Service Check{RESET}")
     print(f"{YELLOW}{'=' * 60}{RESET}")
 
     # First, generate the docker-compose includes file
     print(f"\n{YELLOW}Generating docker-compose includes...{RESET}")
-    gen_cmd = ["python", "scripts/generate_compose_includes.py"]
+    gen_cmd = ["uv", "run", "python", "scripts/generate_compose_includes.py"]
     code, stdout, stderr = run_command(gen_cmd)
     if code != 0:
         print(f"{RED}✗ Failed to generate docker-compose includes: {stderr}{RESET}")
@@ -319,9 +357,14 @@ async def main():
         if os.getenv(env_var, "false").lower() == "true":
             base_services.append(service_name)
 
-    if not all(check_docker_service(s) for s in base_services):
-        checks.append(("Build", build_services()))
-        checks.append(("Start", start_services()))
+    services_running = all(check_docker_service(s) for s in base_services)
+    if not services_running:
+        if args.check_only:
+            checks.append(("Build", False))
+            checks.append(("Start", False))
+        else:
+            checks.append(("Build", build_services()))
+            checks.append(("Start", start_services()))
 
     # Check running services
     print(f"\n{YELLOW}Checking service status...{RESET}")

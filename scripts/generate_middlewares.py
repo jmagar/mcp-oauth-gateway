@@ -93,9 +93,9 @@ def build_cors_snippet(origins: list[str], allow_credentials: bool) -> str:
         ]
 
     lines += [
-        f'add_header Access-Control-Allow-Origin {origin_value} always;',
+        f"add_header Access-Control-Allow-Origin {origin_value} always;",
         'add_header Access-Control-Allow-Methods "GET, POST, OPTIONS, DELETE" always;',
-        'add_header Access-Control-Allow-Headers '
+        "add_header Access-Control-Allow-Headers "
         '"Authorization, Content-Type, Accept, '
         'MCP-Protocol-Version, Mcp-Session-Id, Last-Event-ID" always;',
         f'add_header Access-Control-Allow-Credentials "{creds}" always;',

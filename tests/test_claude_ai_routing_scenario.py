@@ -51,7 +51,9 @@ class TestClaudeAIRoutingScenario:
         )
 
         # CRITICAL: Should get 401, not 404!
-        assert response.status_code == HTTP_UNAUTHORIZED, f"Expected 401, got {response.status_code}"
+        assert response.status_code == HTTP_UNAUTHORIZED, (
+            f"Expected 401, got {response.status_code}"
+        )
 
         # Should have WWW-Authenticate header for OAuth discovery
         assert "www-authenticate" in response.headers, "Missing WWW-Authenticate header"
@@ -64,7 +66,9 @@ class TestClaudeAIRoutingScenario:
         assert "Authorization header" in error["error_description"]
 
     @pytest.mark.asyncio
-    async def test_mcp_path_accessible_with_and_without_trailing_slash(self, http_client, _wait_for_services):
+    async def test_mcp_path_accessible_with_and_without_trailing_slash(
+        self, http_client, _wait_for_services
+    ):
         """Test that /mcp works with and without trailing slash."""
         paths = ["/mcp", "/mcp/"]
 
@@ -81,7 +85,9 @@ class TestClaudeAIRoutingScenario:
             )  # Allow following redirects
 
             # Should eventually get 401 (after any redirects)
-            assert response.status_code == HTTP_UNAUTHORIZED, f"Path {path} returned {response.status_code}"
+            assert response.status_code == HTTP_UNAUTHORIZED, (
+                f"Path {path} returned {response.status_code}"
+            )
 
     @pytest.mark.asyncio
     async def test_swag_nginx_path_routing_exists(self, http_client, _wait_for_services):
@@ -197,7 +203,9 @@ class TestClaudeAIRoutingScenario:
                 "with auth_request /_oauth_verify."
             )
 
-            assert response.status_code == HTTP_UNAUTHORIZED, f"Expected 401 Unauthorized, got {response.status_code}"
+            assert response.status_code == HTTP_UNAUTHORIZED, (
+                f"Expected 401 Unauthorized, got {response.status_code}"
+            )
 
             # Verify it's a proper OAuth error response
             assert "www-authenticate" in response.headers

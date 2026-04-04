@@ -47,6 +47,7 @@ def validate_hostname(name: str, var: str) -> str:
         )
     return name
 
+
 AI_MODELS = [
     "aria",
     "atlas",
@@ -392,9 +393,7 @@ def main(argv: list[str] | None = None) -> int:
 
     base_domain = os.getenv("BASE_DOMAIN", "localhost")
     auth_service_host = os.getenv("AUTH_SERVICE_HOST", "mcp-oauth")
-    auth_domain = os.getenv(
-        "AUTH_DOMAIN", f"mcp-auth.{base_domain}"
-    )
+    auth_domain = os.getenv("AUTH_DOMAIN", f"mcp-auth.{base_domain}")
     mcp_upstream_host = os.getenv("MCP_UPSTREAM_HOST", "mcp-fetch")
     mcp_upstream_port = int(os.getenv("MCP_UPSTREAM_PORT", "3000"))
 

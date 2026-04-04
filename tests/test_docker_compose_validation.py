@@ -42,9 +42,7 @@ class TestOAuthVerifyConf:
         assert "location = /_oauth_verify {" in content, (
             "_oauth_verify.conf must contain 'location = /_oauth_verify {'"
         )
-        assert "internal;" in content, (
-            "_oauth_verify.conf location must be marked internal;"
-        )
+        assert "internal;" in content, "_oauth_verify.conf location must be marked internal;"
 
     def test_oauth_verify_proxies_to_mcp_oauth(self) -> None:
         """Test that _oauth_verify.conf proxies to mcp-oauth:8000/verify."""
@@ -83,9 +81,7 @@ class TestMcpTemplateSubdomainConf:
         assert "location = /_oauth_verify {" in content, (
             "Template must contain 'location = /_oauth_verify {' for auth subrequests"
         )
-        assert "internal;" in content, (
-            "Template _oauth_verify location must be marked internal;"
-        )
+        assert "internal;" in content, "Template _oauth_verify location must be marked internal;"
 
     def test_template_oauth_verify_proxies_to_mcp_oauth(self) -> None:
         """Test that template's _oauth_verify proxies to mcp-oauth:8000/verify."""
@@ -182,16 +178,12 @@ class TestMcpTemplateSubdomainConf:
         content = _read_conf(MCP_TEMPLATE_CONF)
         assert re.search(
             r"location\s+=\s+/\.well-known/oauth-authorization-server\s*\{", content
-        ), (
-            "Template must have 'location = /.well-known/oauth-authorization-server' block"
-        )
+        ), "Template must have 'location = /.well-known/oauth-authorization-server' block"
 
     def test_template_has_error_401_with_www_authenticate(self) -> None:
         """Test that template returns 401 with WWW-Authenticate header on auth failure."""
         content = _read_conf(MCP_TEMPLATE_CONF)
-        assert "error_page 401" in content, (
-            "Template must define error_page 401 handler"
-        )
+        assert "error_page 401" in content, "Template must define error_page 401 handler"
         assert "WWW-Authenticate" in content, (
             "Template must include WWW-Authenticate header in 401 responses (OAuth 2.1)"
         )
@@ -199,12 +191,8 @@ class TestMcpTemplateSubdomainConf:
     def test_template_ssl_configuration_present(self) -> None:
         """Test that template includes SSL configuration."""
         content = _read_conf(MCP_TEMPLATE_CONF)
-        assert "listen 443 ssl;" in content, (
-            "Template must listen on port 443 with SSL"
-        )
-        assert "include /config/nginx/ssl.conf;" in content, (
-            "Template must include SWAG ssl.conf"
-        )
+        assert "listen 443 ssl;" in content, "Template must listen on port 443 with SSL"
+        assert "include /config/nginx/ssl.conf;" in content, "Template must include SWAG ssl.conf"
 
     def test_template_has_dns_rebinding_protection(self) -> None:
         """Test that template includes DNS rebinding origin validation."""
@@ -219,9 +207,7 @@ class TestSwagDockerCompose:
 
     def test_swag_compose_exists(self) -> None:
         """Test that swag/docker-compose.yaml exists."""
-        assert os.path.exists(SWAG_COMPOSE), (
-            f"swag/docker-compose.yaml missing at {SWAG_COMPOSE}!"
-        )
+        assert os.path.exists(SWAG_COMPOSE), f"swag/docker-compose.yaml missing at {SWAG_COMPOSE}!"
 
     def test_swag_compose_has_mcp_net(self) -> None:
         """Test that swag/docker-compose.yaml declares the mcp-net network."""
@@ -230,9 +216,7 @@ class TestSwagDockerCompose:
         with open(SWAG_COMPOSE) as f:
             compose = yaml.safe_load(f)
 
-        assert "networks" in compose, (
-            "swag/docker-compose.yaml must declare networks"
-        )
+        assert "networks" in compose, "swag/docker-compose.yaml must declare networks"
         assert "mcp-net" in compose["networks"], (
             "swag/docker-compose.yaml must declare 'mcp-net' network so SWAG can "
             "reach mcp-oauth:8000 and MCP services"
@@ -249,9 +233,7 @@ class TestSwagDockerCompose:
         assert "swag" in compose["services"], "swag/docker-compose.yaml must have swag service"
 
         swag_service = compose["services"]["swag"]
-        assert "networks" in swag_service, (
-            "swag service must declare networks"
-        )
+        assert "networks" in swag_service, "swag service must declare networks"
         assert "mcp-net" in swag_service["networks"], (
             "swag service must be attached to mcp-net to reach mcp-oauth and MCP services"
         )
@@ -286,9 +268,7 @@ class TestSwagDockerCompose:
 
         ports = [str(p) for p in swag_service["ports"]]
         https_exposed = any("443" in p for p in ports)
-        assert https_exposed, (
-            "swag service must expose port 443 for HTTPS traffic"
-        )
+        assert https_exposed, "swag service must expose port 443 for HTTPS traffic"
 
 
 class TestProxyConfsDirectory:

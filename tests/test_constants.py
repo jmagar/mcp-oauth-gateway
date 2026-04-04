@@ -9,30 +9,13 @@ from dotenv import load_dotenv
 load_dotenv(Path(__file__).resolve().parents[1] / ".env", override=False)
 
 
-ENV_ALIASES = {
-    "GATEWAY_JWT_SECRET": ("OAUTH_JWT_SECRET",),
-    "JWT_ALGORITHM": ("OAUTH_JWT_ALGORITHM",),
-    "JWT_PRIVATE_KEY_B64": ("OAUTH_JWT_PRIVATE_KEY_B64",),
-    "ACCESS_TOKEN_LIFETIME": ("OAUTH_ACCESS_TOKEN_LIFETIME",),
-    "REFRESH_TOKEN_LIFETIME": ("OAUTH_REFRESH_TOKEN_LIFETIME",),
-    "SESSION_TIMEOUT": ("OAUTH_SESSION_TIMEOUT",),
-    "ALLOWED_GITHUB_USERS": ("OAUTH_ALLOWED_GITHUB_USERS",),
-    "MCP_PROTOCOL_VERSION": ("OAUTH_MCP_PROTOCOL_VERSION",),
-}
+from scripts.env_compat import get_auth_base_url
+from scripts.env_compat import get_env_value
 
 
 def _get_env_value(key: str, default=None):
     """Get an environment variable, checking compatibility aliases when needed."""
-    value = os.getenv(key)
-    if value not in (None, ""):
-        return value
-
-    for alias in ENV_ALIASES.get(key, ()):
-        alias_value = os.getenv(alias)
-        if alias_value not in (None, ""):
-            return alias_value
-
-    return default
+    return get_env_value(key, default)
 
 
 def _get_env_or_fail(key: str) -> str:
@@ -72,7 +55,7 @@ def _get_env_optional(key: str, default=None):
 
 # Domain Configuration - From main .env
 BASE_DOMAIN = _get_env_or_fail("BASE_DOMAIN")
-AUTH_BASE_URL = f"https://auth.{BASE_DOMAIN}"
+AUTH_BASE_URL = get_auth_base_url(BASE_DOMAIN)
 
 # MCP Testing URL - Use this if provided for general testing
 MCP_TESTING_URL = _get_env_optional("MCP_TESTING_URL")
@@ -105,7 +88,7 @@ def _get_mcp_service_urls(service_name: str, default_subdomain: str) -> list:
 
 # Get the first URL for backwards compatibility (old single URL variables)
 MCP_ECHO_STATEFUL_URL = _get_mcp_service_urls("echo_stateful", "echo-stateful")[0]
-MCP_ECHO_STATELESS_URL = _get_mcp_service_urls("echo_stateless", "echo-stateless-")[0]
+MCP_ECHO_STATELESS_URL = _get_mcp_service_urls("echo_stateless", "echo-stateless")[0]
 MCP_FETCH_URL = _get_mcp_service_urls("fetch", "fetch")[0]
 MCP_FETCHS_URL = _get_mcp_service_urls("fetchs", "fetchs")[0]
 MCP_FILESYSTEM_URL = _get_mcp_service_urls("filesystem", "filesystem")[0]
@@ -147,12 +130,20 @@ GITHUB_PAT = os.getenv("GITHUB_PAT")  # REQUIRED - GitHub PAT is NOT optional!
 
 # Gateway OAuth Client Credentials (from successful registration) - From main .env
 GATEWAY_OAUTH_CLIENT_ID = os.getenv("GATEWAY_OAUTH_CLIENT_ID")  # Optional, set after registration
-GATEWAY_OAUTH_CLIENT_SECRET = os.getenv("GATEWAY_OAUTH_CLIENT_SECRET")  # Optional, set after registration
-GATEWAY_OAUTH_ACCESS_TOKEN = os.getenv("GATEWAY_OAUTH_ACCESS_TOKEN")  # Optional, set after OAuth flow
-GATEWAY_OAUTH_REFRESH_TOKEN = os.getenv("GATEWAY_OAUTH_REFRESH_TOKEN")  # Optional, set after OAuth flow
+GATEWAY_OAUTH_CLIENT_SECRET = os.getenv(
+    "GATEWAY_OAUTH_CLIENT_SECRET"
+)  # Optional, set after registration
+GATEWAY_OAUTH_ACCESS_TOKEN = os.getenv(
+    "GATEWAY_OAUTH_ACCESS_TOKEN"
+)  # Optional, set after OAuth flow
+GATEWAY_OAUTH_REFRESH_TOKEN = os.getenv(
+    "GATEWAY_OAUTH_REFRESH_TOKEN"
+)  # Optional, set after OAuth flow
 
 # MCP Client tokens for testing MCP endpoints
-MCP_CLIENT_ACCESS_TOKEN = os.getenv("MCP_CLIENT_ACCESS_TOKEN")  # Optional, set after MCP client setup
+MCP_CLIENT_ACCESS_TOKEN = os.getenv(
+    "MCP_CLIENT_ACCESS_TOKEN"
+)  # Optional, set after MCP client setup
 MCP_CLIENT_REFRESH_TOKEN = os.getenv("MCP_CLIENT_REFRESH_TOKEN")  # Optional
 # Backwards compatibility aliases
 OAUTH_CLIENT_ID = GATEWAY_OAUTH_CLIENT_ID
@@ -179,35 +170,51 @@ HEALTH_CHECK_INTERVAL = int(_get_env_optional("HEALTH_CHECK_INTERVAL", "5"))
 ALLOWED_GITHUB_USERS = _get_env_or_fail("ALLOWED_GITHUB_USERS").split(",")
 
 # MCP Everything Configuration - From main .env
-MCP_EVERYTHING_TESTS_ENABLED = (_get_env_optional("MCP_EVERYTHING_TESTS_ENABLED") or "false").lower() == "true"
+MCP_EVERYTHING_TESTS_ENABLED = (
+    _get_env_optional("MCP_EVERYTHING_TESTS_ENABLED") or "false"
+).lower() == "true"
 MCP_EVERYTHING_URLS = _get_mcp_service_urls("everything", "everything")
 
 # MCP Echo Stateful Configuration - From main .env
-MCP_ECHO_STATEFUL_TESTS_ENABLED = (_get_env_optional("MCP_ECHO_STATEFUL_TESTS_ENABLED") or "false").lower() == "true"
+MCP_ECHO_STATEFUL_TESTS_ENABLED = (
+    _get_env_optional("MCP_ECHO_STATEFUL_TESTS_ENABLED") or "false"
+).lower() == "true"
 MCP_ECHO_STATEFUL_URLS = _get_mcp_service_urls("echo_stateful", "echo-stateful")
 
 # MCP Echo Stateless Configuration - From main .env
-MCP_ECHO_STATELESS_TESTS_ENABLED = (_get_env_optional("MCP_ECHO_STATELESS_TESTS_ENABLED") or "false").lower() == "true"
-MCP_ECHO_STATELESS_URLS = _get_mcp_service_urls("echo_stateless", "echo-stateless-")
+MCP_ECHO_STATELESS_TESTS_ENABLED = (
+    _get_env_optional("MCP_ECHO_STATELESS_TESTS_ENABLED") or "false"
+).lower() == "true"
+MCP_ECHO_STATELESS_URLS = _get_mcp_service_urls("echo_stateless", "echo-stateless")
 
 # MCP Fetch Configuration - From main .env
-MCP_FETCH_TESTS_ENABLED = (_get_env_optional("MCP_FETCH_TESTS_ENABLED") or "false").lower() == "true"
+MCP_FETCH_TESTS_ENABLED = (
+    _get_env_optional("MCP_FETCH_TESTS_ENABLED") or "false"
+).lower() == "true"
 MCP_FETCH_URLS = _get_mcp_service_urls("fetch", "fetch")
 
 # MCP Fetchs Configuration - From main .env
-MCP_FETCHS_TESTS_ENABLED = (_get_env_optional("MCP_FETCHS_TESTS_ENABLED") or "false").lower() == "true"
+MCP_FETCHS_TESTS_ENABLED = (
+    _get_env_optional("MCP_FETCHS_TESTS_ENABLED") or "false"
+).lower() == "true"
 MCP_FETCHS_URLS = _get_mcp_service_urls("fetchs", "fetchs")
 
 # MCP Filesystem Configuration - From main .env
-MCP_FILESYSTEM_TESTS_ENABLED = (_get_env_optional("MCP_FILESYSTEM_TESTS_ENABLED") or "false").lower() == "true"
+MCP_FILESYSTEM_TESTS_ENABLED = (
+    _get_env_optional("MCP_FILESYSTEM_TESTS_ENABLED") or "false"
+).lower() == "true"
 MCP_FILESYSTEM_URLS = _get_mcp_service_urls("filesystem", "filesystem")
 
 # MCP Memory Configuration - From main .env
-MCP_MEMORY_TESTS_ENABLED = (_get_env_optional("MCP_MEMORY_TESTS_ENABLED") or "false").lower() == "true"
+MCP_MEMORY_TESTS_ENABLED = (
+    _get_env_optional("MCP_MEMORY_TESTS_ENABLED") or "false"
+).lower() == "true"
 MCP_MEMORY_URLS = _get_mcp_service_urls("memory", "memory")
 
 # MCP Playwright Configuration - From main .env
-MCP_PLAYWRIGHT_TESTS_ENABLED = (_get_env_optional("MCP_PLAYWRIGHT_TESTS_ENABLED") or "false").lower() == "true"
+MCP_PLAYWRIGHT_TESTS_ENABLED = (
+    _get_env_optional("MCP_PLAYWRIGHT_TESTS_ENABLED") or "false"
+).lower() == "true"
 MCP_PLAYWRIGHT_URLS = _get_mcp_service_urls("playwright", "playwright")
 
 # MCP Sequential Thinking Configuration - From main .env
