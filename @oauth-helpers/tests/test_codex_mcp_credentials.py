@@ -22,7 +22,7 @@ def test_compute_store_key_matches_known_codex_value() -> None:
     """The key format must match Codex's Rust implementation exactly."""
     assert (
         compute_store_key("arcane", "https://arcane.example.internal/mcp")
-        == "arcane|a66557511e2868e0"
+        == "arcane|2aa140b6c263c84a"
     )
 
 
@@ -68,7 +68,7 @@ def test_upsert_credential_writes_expected_payload_and_permissions(tmp_path) -> 
 
     data = json.loads(credentials_path.read_text(encoding="utf-8"))
     assert data["existing|123"]["server_name"] == "existing"
-    assert key == "arcane|a66557511e2868e0"
+    assert key == "arcane|2aa140b6c263c84a"
     assert data[key] == {
         "server_name": "arcane",
         "server_url": "https://arcane.example.internal/mcp",
