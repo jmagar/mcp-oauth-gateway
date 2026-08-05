@@ -12,7 +12,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 ADMIN_TOKEN_PATH = PROJECT_ROOT / ".cache" / "callback-relay" / "admin-token"
 DEFAULT_RELAY_API = "http://127.0.0.1:39001"
 DEFAULT_CALLBACK_PORT = 38935
-DEFAULT_CALLBACK_BASE = "https://callback.tootie.tv/callback"
+DEFAULT_CALLBACK_BASE = "https://callback.example.internal/callback"
 
 
 def run_command(command: list[str]) -> str:

@@ -21,7 +21,7 @@ pytestmark = pytest.mark.local_only
 def test_compute_store_key_matches_known_codex_value() -> None:
     """The key format must match Codex's Rust implementation exactly."""
     assert (
-        compute_store_key("arcane", "https://arcane.tootie.tv/mcp")
+        compute_store_key("arcane", "https://arcane.example.internal/mcp")
         == "arcane|a66557511e2868e0"
     )
 
@@ -33,16 +33,16 @@ def test_load_codex_server_url_reads_named_server(tmp_path) -> None:
         '\n'.join(
             [
                 '[mcp_servers.arcane]',
-                'url = "https://arcane.tootie.tv/mcp"',
+                'url = "https://arcane.example.internal/mcp"',
                 '',
                 '[mcp_servers.pulse]',
-                'url = "https://pulse.tootie.tv/mcp"',
+                'url = "https://pulse.example.internal/mcp"',
             ]
         ),
         encoding="utf-8",
     )
 
-    assert load_codex_server_url("arcane", config_path) == "https://arcane.tootie.tv/mcp"
+    assert load_codex_server_url("arcane", config_path) == "https://arcane.example.internal/mcp"
 
 
 def test_upsert_credential_writes_expected_payload_and_permissions(tmp_path) -> None:
@@ -57,7 +57,7 @@ def test_upsert_credential_writes_expected_payload_and_permissions(tmp_path) -> 
         credentials_path,
         CodexCredentialEntry(
             server_name="arcane",
-            server_url="https://arcane.tootie.tv/mcp",
+            server_url="https://arcane.example.internal/mcp",
             client_id="client_123",
             access_token="token_456",  # noqa: S106
             expires_at=1234567890,
@@ -71,7 +71,7 @@ def test_upsert_credential_writes_expected_payload_and_permissions(tmp_path) -> 
     assert key == "arcane|a66557511e2868e0"
     assert data[key] == {
         "server_name": "arcane",
-        "server_url": "https://arcane.tootie.tv/mcp",
+        "server_url": "https://arcane.example.internal/mcp",
         "client_id": "client_123",
         "access_token": "token_456",
         "expires_at": 1234567890,

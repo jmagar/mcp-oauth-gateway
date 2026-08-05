@@ -42,7 +42,7 @@ Live confirmation:
 ```
 HTTP/2 401
 www-authenticate: Bearer
-www-authenticate: Bearer realm="MCP Server", resource="https://axon.tootie.tv/.well-known/oauth-protected-resource"
+www-authenticate: Bearer realm="MCP Server", resource="https://axon.example.internal/.well-known/oauth-protected-resource"
 ```
 
 ---
@@ -51,7 +51,7 @@ www-authenticate: Bearer realm="MCP Server", resource="https://axon.tootie.tv/.w
 
 **Status: ⚠️ PARTIAL**
 
-`/.well-known/oauth-protected-resource` is served as a static JSON response by SWAG for all deployed MCP service domains (e.g. `axon.tootie.tv`). The response includes `resource`, `authorization_servers`, `scopes_supported`, and `bearer_methods_supported`. Live response confirmed valid.
+`/.well-known/oauth-protected-resource` is served as a static JSON response by SWAG for all deployed MCP service domains (e.g. `axon.example.internal`). The response includes `resource`, `authorization_servers`, `scopes_supported`, and `bearer_methods_supported`. Live response confirmed valid.
 
 **Missing: path-based discovery.** RFC 9728 allows `/.well-known/oauth-protected-resource/{resource-path}` for compound URIs. In the current config, `/.well-known/oauth-protected-resource/mcp` falls through to `location /` which applies `auth_request`, resulting in a `401` instead of the metadata document. This is a minor issue as most clients use only the exact-match path.
 
@@ -64,8 +64,8 @@ www-authenticate: Bearer realm="MCP Server", resource="https://axon.tootie.tv/.w
 **Status: ⚠️ PARTIAL**
 
 `/.well-known/oauth-authorization-server` is served at both:
-- `https://mcp-auth.tootie.tv/.well-known/oauth-authorization-server` (auth service domain) — works, returns full metadata
-- `https://axon.tootie.tv/.well-known/oauth-authorization-server` (per MCP service domain) — proxied to auth service, works
+- `https://mcp-auth.example.internal/.well-known/oauth-authorization-server` (auth service domain) — works, returns full metadata
+- `https://axon.example.internal/.well-known/oauth-authorization-server` (per MCP service domain) — proxied to auth service, works
 
 **Missing:**
 
@@ -75,9 +75,9 @@ www-authenticate: Bearer realm="MCP Server", resource="https://axon.tootie.tv/.w
 
 Live confirmed:
 ```
-curl https://mcp-auth.tootie.tv/.well-known/openid-configuration → 404
-curl https://axon.tootie.tv/.well-known/openid-configuration → 404
-curl https://axon.tootie.tv/.well-known/oauth-authorization-server/mcp → 401
+curl https://mcp-auth.example.internal/.well-known/openid-configuration → 404
+curl https://axon.example.internal/.well-known/openid-configuration → 404
+curl https://axon.example.internal/.well-known/oauth-authorization-server/mcp → 401
 ```
 
 ---
@@ -111,7 +111,7 @@ Location to fix: `routes.py` `oauth_metadata()` function, lines 84–103.
 
 Neither the `/authorize` endpoint nor the `/token` endpoint accepts or processes the `resource` parameter. The `authorize` function signature (routes.py lines 221–230) has no `resource` query parameter. The `token_exchange` function (routes.py lines 457–468) has no `resource` form field. The parameter is silently ignored if passed.
 
-As a consequence, the JWT `aud` claim is always set to the auth server's own URL (`https://mcp-auth.tootie.tv`) regardless of which resource the client is requesting access to. Per RFC 8707, the `aud` should match the resource URI when the `resource` parameter is used. Clients enforcing audience validation against the target MCP resource URL will reject these tokens.
+As a consequence, the JWT `aud` claim is always set to the auth server's own URL (`https://mcp-auth.example.internal`) regardless of which resource the client is requesting access to. Per RFC 8707, the `aud` should match the resource URI when the `resource` parameter is used. Clients enforcing audience validation against the target MCP resource URL will reject these tokens.
 
 Relevant code in `auth_authlib.py` line 102:
 ```python
@@ -142,7 +142,7 @@ The token endpoint accepts any scope string and the authorization endpoint defau
 
 **Status: ⚠️ PARTIAL**
 
-The `aud` claim is set in issued tokens (value: `https://mcp-auth.tootie.tv`). However, the `resource_protector.py` `claims_options` does NOT validate the `aud` claim — only `iss`, `exp`, and `jti` are validated. This means tokens with a tampered or absent `aud` would still be accepted by `/verify`. Additionally, because the `aud` is always the auth server URL and never the target resource URL (no RFC 8707 support), clients that use the resource indicator to scope tokens cannot obtain appropriately-audienced tokens.
+The `aud` claim is set in issued tokens (value: `https://mcp-auth.example.internal`). However, the `resource_protector.py` `claims_options` does NOT validate the `aud` claim — only `iss`, `exp`, and `jti` are validated. This means tokens with a tampered or absent `aud` would still be accepted by `/verify`. Additionally, because the `aud` is always the auth server URL and never the target resource URL (no RFC 8707 support), clients that use the resource indicator to scope tokens cannot obtain appropriately-audienced tokens.
 
 ---
 
@@ -154,7 +154,7 @@ The `aud` claim is set in issued tokens (value: `https://mcp-auth.tootie.tv`). H
 
 3. The OpenID Connect Discovery (`/.well-known/openid-configuration`) gap is strictly a spec compliance issue — Claude.ai uses `/.well-known/oauth-authorization-server` primarily, so practical impact is limited to clients using OIDC discovery.
 
-4. Path-based discovery gaps only matter for MCP resource URIs with path components (e.g. `https://axon.tootie.tv/mcp`). If clients use the hostname-only URI, exact-match discovery works fine.
+4. Path-based discovery gaps only matter for MCP resource URIs with path components (e.g. `https://axon.example.internal/mcp`). If clients use the hostname-only URI, exact-match discovery works fine.
 
 5. The `resource` parameter gap (RFC 8707) is the highest-risk missing feature for future MCP client compatibility, as the 2025-11-25 spec explicitly requires server support for audience-bound tokens.
 

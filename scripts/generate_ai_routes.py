@@ -17,8 +17,8 @@ Usage:
     python scripts/generate_ai_routes.py [--output-dir PATH] [--dry-run]
 
 Environment variables:
-    BASE_DOMAIN      - Base domain, e.g. tootie.tv  (default: localhost)
-    AUTH_DOMAIN      - Auth subdomain FQDN, e.g. mcp-auth.tootie.tv
+    BASE_DOMAIN      - Base domain, e.g. example.internal  (default: localhost)
+    AUTH_DOMAIN      - Auth subdomain FQDN, e.g. mcp-auth.example.internal
                        (default: mcp-auth.$BASE_DOMAIN)
     AUTH_SERVICE_HOST - Docker service name for the OAuth service
                        (default: mcp-oauth)
@@ -74,7 +74,7 @@ def generate_conf_for_model(
 
     Args:
         model: Short model name, e.g. ``aria``.
-        base_domain: Base domain, e.g. ``tootie.tv``.
+        base_domain: Base domain, e.g. ``example.internal``.
         auth_domain: Fully-qualified auth service domain for the
             ``/.well-known/oauth-protected-resource`` JSON response.
         auth_service_host: Docker service name for the OAuth service.

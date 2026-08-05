@@ -20,9 +20,9 @@ Description:
   such as account login on 127.0.0.1:1455.
 
 Examples:
-  codex-login-with-browser-tunnel.sh steamy-wsl
-  codex-login-with-browser-tunnel.sh steamy-wsl 1455
-  codex-login-with-browser-tunnel.sh steamy-wsl 1455 -- --device-auth
+  codex-login-with-browser-tunnel.sh winhost-wsl
+  codex-login-with-browser-tunnel.sh winhost-wsl 1455
+  codex-login-with-browser-tunnel.sh winhost-wsl 1455 -- --device-auth
 
 Requirements:
   - Run this on the headless machine where `codex login` will run.
