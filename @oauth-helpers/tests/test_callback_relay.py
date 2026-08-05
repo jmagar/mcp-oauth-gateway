@@ -42,22 +42,22 @@ async def test_register_and_forward_callback(
     relay_app = create_app(registry, relay_client=relay_client)
     relay_http = httpx.AsyncClient(
         transport=httpx.ASGITransport(app=relay_app),
-        base_url="https://callback.tootie.tv",
+        base_url="https://callback.example.internal",
     )
 
     try:
         register_response = await relay_http.put(
-            "/api/machines/squirts",
+            "/api/machines/edgehost",
             headers={"Authorization": "Bearer relay-secret"},
             json={
                 "target_url": "http://machine.internal/callback",
-                "description": "squirts codex box",
+                "description": "edgehost codex box",
             },
         )
         assert register_response.status_code == 200
 
         callback_response = await relay_http.get(
-            "/callback/squirts",
+            "/callback/edgehost",
             params={"code": "abc123", "state": "xyz789"},
         )
         assert callback_response.status_code == 200
@@ -65,11 +65,11 @@ async def test_register_and_forward_callback(
         assert captured == {
             "path": "/callback",
             "query": "code=abc123&state=xyz789",
-            "machine": "squirts",
+            "machine": "edgehost",
         }
 
         persisted = json.loads((tmp_path / "registry.json").read_text(encoding="utf-8"))
-        assert persisted["squirts"]["target_url"] == "http://machine.internal/callback"
+        assert persisted["edgehost"]["target_url"] == "http://machine.internal/callback"
     finally:
         await relay_http.aclose()
         await relay_client.aclose()
@@ -85,12 +85,12 @@ async def test_register_requires_admin_token(
     relay_app = create_app(RelayRegistry(tmp_path / "registry.json"))
     relay_http = httpx.AsyncClient(
         transport=httpx.ASGITransport(app=relay_app),
-        base_url="https://callback.tootie.tv",
+        base_url="https://callback.example.internal",
     )
 
     try:
         response = await relay_http.put(
-            "/api/machines/squirts",
+            "/api/machines/edgehost",
             json={"target_url": "http://machine.internal/callback"},
         )
         assert response.status_code == 401

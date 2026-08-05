@@ -19,13 +19,13 @@ The relay solves only the callback delivery problem. It does not mint tokens on 
 The relay accepts a public callback URL such as:
 
 ```text
-https://callback.tootie.tv/callback/squirts?code=...&state=...
+https://callback.example.internal/callback/edgehost?code=...&state=...
 ```
 
 and forwards that request to the Codex machine's local callback listener, for example:
 
 ```text
-http://127.0.0.1:38935/callback/squirts?code=...&state=...
+http://127.0.0.1:38935/callback/edgehost?code=...&state=...
 ```
 
 If the forwarded request reaches the live Codex listener while the `codex mcp login` command is still waiting, Codex finishes the OAuth flow normally and stores the resulting credentials itself.
@@ -34,9 +34,9 @@ If the forwarded request reaches the live Codex listener while the `codex mcp lo
 
 ### Public entrypoint
 
-- Public hostname: `https://callback.tootie.tv`
+- Public hostname: `https://callback.example.internal`
 - Reverse proxy: SWAG
-- SWAG upstream target on `squirts`: `100.75.111.118:39001`
+- SWAG upstream target on `edgehost`: `198.51.100.1:39001`
 
 ### Relay service
 
@@ -64,7 +64,7 @@ Current default path:
 .cache/callback-relay/registry.json
 ```
 
-Admin token path on `squirts`:
+Admin token path on `edgehost`:
 
 ```text
 .cache/callback-relay/admin-token
@@ -95,7 +95,7 @@ The compose service persists its registry under:
 /app/.cache/callback-relay/registry.json
 ```
 
-On `squirts`, the relay was initially run as a user `systemd` transient unit:
+On `edgehost`, the relay was initially run as a user `systemd` transient unit:
 
 ```bash
 systemd-run --user --unit=callback-relay --collect --same-dir \
@@ -109,7 +109,7 @@ systemd-run --user --unit=callback-relay --collect --same-dir \
 This makes the relay reachable from SWAG on:
 
 ```text
-http://100.75.111.118:39001
+http://198.51.100.1:39001
 ```
 
 ## End-to-end flow
@@ -128,13 +128,13 @@ Because Codex is configured with:
 
 ```toml
 mcp_oauth_callback_port = 38935
-mcp_oauth_callback_url = "https://callback.tootie.tv/callback/squirts"
+mcp_oauth_callback_url = "https://callback.example.internal/callback/edgehost"
 ```
 
 the generated OAuth request includes:
 
 ```text
-redirect_uri=https://callback.tootie.tv/callback/squirts
+redirect_uri=https://callback.example.internal/callback/edgehost
 ```
 
 ### 2. Browser completes OAuth
@@ -142,25 +142,25 @@ redirect_uri=https://callback.tootie.tv/callback/squirts
 The browser is redirected through the OAuth gateway and finally lands on:
 
 ```text
-https://callback.tootie.tv/callback/squirts?code=...&state=...
+https://callback.example.internal/callback/edgehost?code=...&state=...
 ```
 
 ### 3. SWAG forwards to relay
 
-SWAG receives the request and proxies it to the relay on `squirts`.
+SWAG receives the request and proxies it to the relay on `edgehost`.
 
 ### 4. Relay looks up the machine target
 
-The relay resolves `squirts` in its registry and retrieves a target URL such as:
+The relay resolves `edgehost` in its registry and retrieves a target URL such as:
 
 ```text
-http://127.0.0.1:38935/callback/squirts
+http://127.0.0.1:38935/callback/edgehost
 ```
 
 or for another machine:
 
 ```text
-http://100.88.16.79:38935/callback/dookie
+http://198.51.100.2:38935/callback/devhost
 ```
 
 ### 5. Relay forwards the request
@@ -203,18 +203,18 @@ Each Codex machine needs:
 
 ### Codex config
 
-Example for machine `squirts`:
+Example for machine `edgehost`:
 
 ```toml
 mcp_oauth_callback_port = 38935
-mcp_oauth_callback_url = "https://callback.tootie.tv/callback/squirts"
+mcp_oauth_callback_url = "https://callback.example.internal/callback/edgehost"
 ```
 
-Example for machine `dookie`:
+Example for machine `devhost`:
 
 ```toml
 mcp_oauth_callback_port = 38935
-mcp_oauth_callback_url = "https://callback.tootie.tv/callback/dookie"
+mcp_oauth_callback_url = "https://callback.example.internal/callback/devhost"
 ```
 
 ### Relay registration
@@ -230,8 +230,8 @@ Examples:
 
 ```json
 {
-  "target_url": "http://127.0.0.1:38935/callback/squirts",
-  "description": "squirts codex callback"
+  "target_url": "http://127.0.0.1:38935/callback/edgehost",
+  "description": "edgehost codex callback"
 }
 ```
 
@@ -239,8 +239,8 @@ Examples:
 
 ```json
 {
-  "target_url": "http://100.88.16.79:38935/callback/dookie",
-  "description": "dookie codex callback"
+  "target_url": "http://198.51.100.2:38935/callback/devhost",
+  "description": "devhost codex callback"
 }
 ```
 
@@ -255,32 +255,32 @@ curl -X PUT http://127.0.0.1:39001/api/machines/<machine-id> \
 
 ## Current known-good examples
 
-### `squirts`
+### `edgehost`
 
 - Public callback URL:
-  `https://callback.tootie.tv/callback/squirts`
+  `https://callback.example.internal/callback/edgehost`
 - Relay target:
-  `http://127.0.0.1:38935/callback/squirts`
+  `http://127.0.0.1:38935/callback/edgehost`
 
 Why loopback works here:
 
-- the relay runs on `squirts`
-- Codex also runs on `squirts`
+- the relay runs on `edgehost`
+- Codex also runs on `edgehost`
 - relay can reach Codex through `127.0.0.1`
 
-### `dookie`
+### `devhost`
 
 - Public callback URL:
-  `https://callback.tootie.tv/callback/dookie`
+  `https://callback.example.internal/callback/devhost`
 - Relay target:
-  `http://100.88.16.79:38935/callback/dookie`
+  `http://198.51.100.2:38935/callback/devhost`
 
 Why loopback does not work here:
 
-- the relay runs on `squirts`
-- Codex runs on `dookie`
-- `127.0.0.1` on `squirts` is not `dookie`
-- relay must use `dookie`'s reachable Tailscale address
+- the relay runs on `edgehost`
+- Codex runs on `devhost`
+- `127.0.0.1` on `edgehost` is not `devhost`
+- relay must use `devhost`'s reachable Tailscale address
 
 ## Failure modes and what they mean
 
@@ -308,7 +308,7 @@ http://127.0.0.1:38935/callback
 when Codex expects:
 
 ```text
-http://127.0.0.1:38935/callback/squirts
+http://127.0.0.1:38935/callback/edgehost
 ```
 
 ### `Authorization state not found`
@@ -336,7 +336,7 @@ If `38935` is not listening when the browser callback lands, the relay cannot he
 ### Check relay health
 
 ```bash
-curl https://callback.tootie.tv/healthz
+curl https://callback.example.internal/healthz
 curl http://127.0.0.1:39001/healthz
 ```
 
@@ -350,23 +350,23 @@ journalctl --user -u callback-relay.service -n 100 --no-pager
 ### Query machine registration
 
 ```bash
-curl http://127.0.0.1:39001/api/machines/squirts \
+curl http://127.0.0.1:39001/api/machines/edgehost \
   -H "Authorization: Bearer <relay-admin-token>"
 ```
 
 ### Update machine registration
 
 ```bash
-curl -X PUT http://127.0.0.1:39001/api/machines/squirts \
+curl -X PUT http://127.0.0.1:39001/api/machines/edgehost \
   -H "Authorization: Bearer <relay-admin-token>" \
   -H "Content-Type: application/json" \
-  -d '{"target_url":"http://127.0.0.1:38935/callback/squirts","description":"squirts codex callback"}'
+  -d '{"target_url":"http://127.0.0.1:38935/callback/edgehost","description":"edgehost codex callback"}'
 ```
 
 ### Delete machine registration
 
 ```bash
-curl -X DELETE http://127.0.0.1:39001/api/machines/squirts \
+curl -X DELETE http://127.0.0.1:39001/api/machines/edgehost \
   -H "Authorization: Bearer <relay-admin-token>"
 ```
 
@@ -384,10 +384,10 @@ The registry stores entries like:
 
 ```json
 {
-  "squirts": {
-    "machine_id": "squirts",
-    "target_url": "http://127.0.0.1:38935/callback/squirts",
-    "description": "squirts codex callback"
+  "edgehost": {
+    "machine_id": "edgehost",
+    "target_url": "http://127.0.0.1:38935/callback/edgehost",
+    "description": "edgehost codex callback"
   }
 }
 ```

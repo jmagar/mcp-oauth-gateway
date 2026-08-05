@@ -23,9 +23,9 @@ Run this on the headless machine:
 Examples:
 
 ```bash
-./codex-login-with-browser-tunnel.sh steamy-wsl
-./codex-login-with-browser-tunnel.sh steamy-wsl 1455
-./codex-login-with-browser-tunnel.sh steamy-wsl 1455 -- --device-auth
+./codex-login-with-browser-tunnel.sh winhost-wsl
+./codex-login-with-browser-tunnel.sh winhost-wsl 1455
+./codex-login-with-browser-tunnel.sh winhost-wsl 1455 -- --device-auth
 ```
 
 ## Behavior

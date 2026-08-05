@@ -46,35 +46,35 @@ browser machine over SSH:
 Examples:
 
 ```bash
-./localhost-auth-tunnel.sh up dookie 1455
-./localhost-auth-tunnel.sh up dookie 6274
-./localhost-auth-tunnel.sh up dookie 1455 6274
-./localhost-auth-tunnel.sh reverse-up steamy-wsl 1455
+./localhost-auth-tunnel.sh up devhost 1455
+./localhost-auth-tunnel.sh up devhost 6274
+./localhost-auth-tunnel.sh up devhost 1455 6274
+./localhost-auth-tunnel.sh reverse-up winhost-wsl 1455
 ```
 
 Check tunnel status:
 
 ```bash
-./localhost-auth-tunnel.sh status dookie 1455
+./localhost-auth-tunnel.sh status devhost 1455
 ```
 
 Stop the tunnel:
 
 ```bash
-./localhost-auth-tunnel.sh down dookie 1455
+./localhost-auth-tunnel.sh down devhost 1455
 ```
 
 Reverse-mode status and stop:
 
 ```bash
-./localhost-auth-tunnel.sh reverse-status steamy-wsl 1455
-./localhost-auth-tunnel.sh reverse-down steamy-wsl 1455
+./localhost-auth-tunnel.sh reverse-status winhost-wsl 1455
+./localhost-auth-tunnel.sh reverse-down winhost-wsl 1455
 ```
 
 Print the raw `ssh -L` command without starting it:
 
 ```bash
-./localhost-auth-tunnel.sh print dookie 1455
+./localhost-auth-tunnel.sh print devhost 1455
 ```
 
 ## Example Flows
@@ -84,11 +84,11 @@ Print the raw `ssh -L` command without starting it:
 If the login server binds `127.0.0.1:1455` on the remote machine:
 
 ```bash
-./localhost-auth-tunnel.sh up dookie 1455
+./localhost-auth-tunnel.sh up devhost 1455
 ```
 
 Then complete the normal login flow in your browser. The browser's
-`127.0.0.1:1455` callback will be forwarded to `dookie`.
+`127.0.0.1:1455` callback will be forwarded to `devhost`.
 
 ### Run It From The Headless Machine
 
@@ -118,7 +118,7 @@ to log in over SSH.
 If `MCP_OAUTH_CALLBACK_PORT=6274` on the remote machine:
 
 ```bash
-./localhost-auth-tunnel.sh up dookie 6274
+./localhost-auth-tunnel.sh up devhost 6274
 ```
 
 Then add/login to the MCP server normally.

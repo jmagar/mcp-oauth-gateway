@@ -121,7 +121,7 @@ When creating a new conf from `mcp-template.subdomain.conf`, replace these place
 |---|---|---|
 | `{{SERVICE_NAME}}` | `axon` | Used in nginx server_name and comments |
 | `{{DOMAIN}}` | `axon.example.com` | Full subdomain FQDN |
-| `{{UPSTREAM_IP}}` | `100.75.111.118` | IP of the upstream host (Tailscale or LAN) |
+| `{{UPSTREAM_IP}}` | `198.51.100.1` | IP of the upstream host (Tailscale or LAN) |
 | `{{UPSTREAM_PORT}}` | `3002` | Port the MCP service listens on |
 | `{{AUTH_DOMAIN}}` | `mcp-auth.example.com` | Domain of the auth service for metadata responses |
 

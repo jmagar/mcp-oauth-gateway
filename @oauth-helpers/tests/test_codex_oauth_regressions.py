@@ -47,7 +47,7 @@ def _build_settings(*, algorithm: str = "HS256") -> Settings:
             "github_client_secret": "github-secret",
             "OAUTH_JWT_SECRET": "x" * 64,
             "OAUTH_JWT_ALGORITHM": algorithm,
-            "base_domain": "tootie.tv",
+            "base_domain": "example.internal",
             "auth_subdomain": "mcp-auth",
             "redis_url": "redis://localhost:6379/0",
             "redis_password": None,
@@ -84,7 +84,7 @@ def _build_request(headers: dict[str, str]) -> Request:
         "query_string": b"",
         "headers": raw_headers,
         "client": ("127.0.0.1", 12345),
-        "server": ("axon.tootie.tv", 443),
+        "server": ("axon.example.internal", 443),
     }
     return Request(scope)
 
@@ -122,26 +122,26 @@ async def test_codex_challenge_uses_resource_metadata_and_configured_auth_subdom
         await protector.validate_request(
             _build_request(
                 {
-                    "host": "axon.tootie.tv",
+                    "host": "axon.example.internal",
                     "x-forwarded-proto": "https",
                     "authorization": "Bearer bad-token",
                 }
             ),
-            resource="https://axon.tootie.tv",
+            resource="https://axon.example.internal",
         )
 
     challenge = exc_info.value.headers["WWW-Authenticate"]
     assert exc_info.value.status_code == 401
     assert (
-        'as_uri="https://mcp-auth.tootie.tv/.well-known/oauth-authorization-server"'
+        'as_uri="https://mcp-auth.example.internal/.well-known/oauth-authorization-server"'
         in challenge
     )
     assert (
-        'resource_metadata="https://axon.tootie.tv/.well-known/oauth-protected-resource"'
+        'resource_metadata="https://axon.example.internal/.well-known/oauth-protected-resource"'
         in challenge
     )
     assert "resource_uri=" not in challenge
-    assert "https://auth.tootie.tv/" not in challenge
+    assert "https://auth.example.internal/" not in challenge
 
 
 @pytest.mark.asyncio
@@ -166,4 +166,4 @@ async def test_codex_fallback_audience_uses_configured_auth_subdomain(
     )
 
     payload = _decode_payload(token)
-    assert payload["aud"] == "https://mcp-auth.tootie.tv"
+    assert payload["aud"] == "https://mcp-auth.example.internal"

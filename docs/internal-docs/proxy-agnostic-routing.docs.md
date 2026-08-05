@@ -67,7 +67,7 @@ Given the above, the minimal service registry config must express:
 | Variable pattern | Example | Purpose |
 |---|---|---|
 | `MCP_<SERVICE>_ENABLED` | `MCP_FETCH_ENABLED=true` | Already exists — gates service inclusion |
-| `MCP_<SERVICE>_URLS` | `MCP_FETCH_URLS=https://fetch.tootie.tv/mcp` | Already exists — public URL for tests and client-facing `resource` field |
+| `MCP_<SERVICE>_URLS` | `MCP_FETCH_URLS=https://fetch.example.internal/mcp` | Already exists — public URL for tests and client-facing `resource` field |
 | `MCP_<SERVICE>_INTERNAL_URL` | `MCP_FETCH_INTERNAL_URL=http://mcp-fetch:3000` | **New** — Docker-internal backend URL for direct proxy |
 
 The auth service can then:

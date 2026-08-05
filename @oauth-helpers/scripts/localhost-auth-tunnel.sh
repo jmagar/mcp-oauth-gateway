@@ -34,12 +34,12 @@ Description:
   browser-facing listener on the SSH target and forwards it back to this machine.
 
 Examples:
-  localhost-auth-tunnel.sh up dookie 1455
-  localhost-auth-tunnel.sh reverse-up steamy-wsl 1455
-  localhost-auth-tunnel.sh up dookie 6274
-  localhost-auth-tunnel.sh up dookie 1455 6274
-  localhost-auth-tunnel.sh status dookie 1455
-  localhost-auth-tunnel.sh down dookie 1455
+  localhost-auth-tunnel.sh up devhost 1455
+  localhost-auth-tunnel.sh reverse-up winhost-wsl 1455
+  localhost-auth-tunnel.sh up devhost 6274
+  localhost-auth-tunnel.sh up devhost 1455 6274
+  localhost-auth-tunnel.sh status devhost 1455
+  localhost-auth-tunnel.sh down devhost 1455
 
 Behavior:
   - Uses SSH ControlMaster sockets so the tunnel can be checked and stopped.
